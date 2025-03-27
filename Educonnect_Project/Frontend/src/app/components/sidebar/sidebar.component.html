@@ -1,0 +1,78 @@
+<div class="sidebar" [class.expanded]="isExpanded">
+  <!-- Top: Profile & Toggle Button -->
+  <div class="top-section">
+    <img class="profile-img" src="assets/profile.jpg" alt="Profile" />
+    <button class="toggle-btn" (click)="toggleSidebar()">
+      <mat-icon>{{ isExpanded ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+    </button>
+  </div>
+
+  <div class="sidebar-content">
+    <hr class="divider" />
+
+    <!-- MAIN Section -->
+    <div class="nav-section main-section">
+      <div class="section-title main-title">MAIN</div>
+      <nav class="nav">
+        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+          <mat-icon>bar_chart</mat-icon>
+          <span *ngIf="isExpanded">Dashboard</span>
+          <div class="side-tooltip" *ngIf="!isExpanded">Dashboard</div>
+        </button>
+
+        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+          <mat-icon>person</mat-icon>
+          <span *ngIf="isExpanded">Users</span>
+          <div class="side-tooltip" *ngIf="!isExpanded">Users</div>
+        </button>
+
+        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+          <mat-icon>home</mat-icon>
+          <span *ngIf="isExpanded">Home</span>
+          <div class="side-tooltip" *ngIf="!isExpanded">Home</div>
+        </button>
+
+        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+          <mat-icon>calendar_today</mat-icon>
+          <span *ngIf="isExpanded">Calendar</span>
+          <div class="side-tooltip" *ngIf="!isExpanded">Calendar</div>
+        </button>
+
+        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+          <mat-icon>description</mat-icon>
+          <span *ngIf="isExpanded">EduBot AI</span>
+          <div class="side-tooltip" *ngIf="!isExpanded">EduBot AI</div>
+        </button>
+      </nav>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- SETTINGS Section -->
+    <div class="nav-section">
+      <div class="section-title settings-title">SETTINGS</div>
+      <nav class="nav">
+        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+          <mat-icon>settings</mat-icon>
+          <span *ngIf="isExpanded">Settings</span>
+          <div class="side-tooltip" *ngIf="!isExpanded">Settings</div>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Bottom Buttons: Help & Logout -->
+    <nav class="nav bottom-nav">
+      <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+        <mat-icon>help</mat-icon>
+        <span *ngIf="isExpanded">Help</span>
+        <div class="side-tooltip" *ngIf="!isExpanded">Help</div>
+      </button>
+
+      <button class="nav-btn logout has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+        <mat-icon>logout</mat-icon>
+        <span *ngIf="isExpanded">Logout</span>
+        <div class="side-tooltip" *ngIf="!isExpanded">Logout</div>
+      </button>
+    </nav>
+  </div>
+</div>

@@ -1,0 +1,306 @@
+// === Color Variables ===
+$bg: #202020;
+$hover: #2c2c2c;
+$muted: #aaa;
+$toggle-bg: #2a2a2a;
+$highlight: #e0e0e0;
+$icon-muted: #888;
+$icon-hover: #fff;
+$btn-hover-bg: #2e2e2e;
+$danger: #ff6b6b;
+$tooltip-bg: #2e2f39;
+
+
+@keyframes fadeInSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.sidebar {
+  position: relative;
+  background-color: $bg;
+  top: 1rem;
+  left: 1rem;
+  bottom: 1rem;
+  width: 80px;
+  border-radius: 20px;
+  padding: 1rem 0.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 999;
+  overflow: visible;
+
+  .nav-btn,
+  .section-title,
+  mat-icon {
+    transition: all 0.3s ease-in-out;
+  }
+
+  &.expanded {
+    width: 240px;
+  }
+
+  // === Top Section ===
+  .top-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+
+    .profile-img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+  }
+
+  .sidebar-content {
+    overflow: visible;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+
+    > .nav-section {
+      margin-bottom: -2.3rem;
+
+      &:nth-of-type(2) {
+        margin-bottom: 7rem;
+      }
+    }
+
+    .divider {
+      width: 80%;
+      border: none;
+      border-top: 1px solid #333;
+      margin: 1rem auto;
+    }
+
+    .bottom-nav {
+      margin-top: auto;
+    }
+  }
+
+  // === Section Group ===
+  .nav-section {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+
+    .section-title {
+      font-size: 12px;
+      color: $muted;
+      margin-bottom: 0.5rem;
+      width: 100%;
+      text-align: left;
+      transition: none !important;
+    }
+
+    // === MAIN title positioning (centered above MAIN icons)
+    .main-title {
+      padding-left: 1.1rem; // ✅ visually centered for MAIN group
+    }
+
+    // === SETTINGS title positioning (centered above SETTINGS icons)
+    .settings-title {
+      padding-left: 0.32rem; // ✅ slightly adjusted for visual centering
+    }
+
+
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+  }
+
+  // === Bottom Nav
+  .bottom-nav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  // === Base nav button style
+  .nav-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    margin: 0.2rem 0;
+    border-radius: 12px;
+    background-color: $bg;
+    border: none;
+    color: $icon-muted;
+    cursor: pointer;
+    min-height: 44px;
+    transition: background-color 0.2s ease;
+
+    mat-icon {
+      font-size: 24px;
+      min-width: 24px;
+      text-align: center;
+      color: inherit;
+      flex-shrink: 0;
+      margin-left: 0.28rem;
+    }
+
+    // Subtitle styles (only this animates)
+    span {
+      position: absolute;
+      left: 56px; // aligns nicely beside icon
+      opacity: 0;
+      white-space: nowrap;
+      color: inherit;
+      animation: fadeInSlide 0.6s ease forwards;
+      pointer-events: auto;
+    }
+
+    &:hover {
+      background-color: $tooltip-bg;
+    }
+
+    &.centered {
+      justify-content: flex-start !important; // stop recenters
+    }
+
+    &.left {
+      justify-content: flex-start !important;
+    }
+  }
+
+  // === Subtitles fade in on expand
+  &.expanded .nav-btn span {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  // === MAIN Section: white
+  .main-section .nav-btn {
+    color: $highlight !important;
+
+    mat-icon,
+    span {
+      color: $highlight !important;
+    }
+
+    &:hover {
+      background-color: $tooltip-bg;
+    }
+  }
+
+  // === SETTINGS + HELP: grey
+  .nav-section:nth-of-type(2) .nav-btn,
+  .bottom-nav .nav-btn:not(.logout) {
+    color: $icon-muted;
+
+    &:hover {
+      background-color: $tooltip-bg;
+    }
+
+    mat-icon {
+      color: inherit !important;
+    }
+  }
+
+  // === LOGOUT: red
+  .logout {
+    color: $danger;
+
+    &:hover {
+      background-color: $tooltip-bg;
+    }
+
+    mat-icon {
+      color: inherit !important;
+    }
+  }
+
+  // === Toggle Button
+  .toggle-btn {
+    position: absolute;
+    top: 0.7rem;
+    right: -25px;
+    width: 30px;
+    height: 30px;
+    background-color: $toggle-bg;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    border: 1px solid #444;
+    z-index: 1;
+
+    mat-icon {
+      color: white !important;
+      font-size: 20px;
+      line-height: 1;
+      position: relative;
+      top: 2px;
+    }
+
+    &:hover {
+      background-color: $hover;
+    }
+  }
+
+  // === Ensure all icons inherit current color
+  mat-icon {
+    color: inherit !important;
+  }
+}
+
+.has-tooltip {
+  position: relative;
+
+  .side-tooltip {
+    position: absolute;
+    top: 50%;
+    left: 110%;
+    transform: translateY(-50%);
+    background-color: #2e2f39; // ✅ dark grey-blue
+    color: $highlight;
+    padding: 0.4rem 0.8rem;
+    font-size: 14px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+
+    // Optional arrow
+    &::before {
+      content: '';
+      position: absolute;
+      left: -4px; // align correctly with reduced size
+      top: 50%;
+      transform: translateY(-50%) rotate(45deg);
+      width: 8px;
+      height: 8px;
+      background-color: #2e2f39;
+      z-index: -1;
+    }
+  }
+
+  &:hover .side-tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(4px);
+  }
+}
