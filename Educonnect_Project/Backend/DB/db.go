@@ -4,14 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"golang.org/x/crypto/bcrypt"
 	"log"
+	"time"
 )
 
 var DB *sql.DB
 
 func Connect() error {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		"root", "Kunstturnen07", "localhost", 3306, "EduConnect")
+		"EduAdmin", "EduPasswort123", "138.199.221.113", 3306, "EduDB")
 
 	var err error
 	DB, err = sql.Open("mysql", dsn)
@@ -19,65 +21,79 @@ func Connect() error {
 		return fmt.Errorf("Fehler beim Öffnen der Datenbank: %v", err)
 	}
 
-	DB.SetMaxOpenConns(10) // Maximale Anzahl geöffneter Verbindungen
-	DB.SetMaxIdleConns(5)  // Maximale Anzahl Leerlaufverbindungen
+	DB.SetMaxOpenConns(10)
+	DB.SetMaxIdleConns(5)
 
 	if err = DB.Ping(); err != nil {
 		DB.Close()
 		return fmt.Errorf("Fehler bei der Verbindung zur Datenbank: %v", err)
 	}
 
-	log.Println("Erfolgreich mit der lokalen MySQL-Datenbank verbunden!")
+	log.Println("Erfolgreich mit dem Webserver verbunden!")
 	return nil
 }
 
-// Close schließt die Verbindung zur Datenbank
 func Close() {
 	if DB != nil {
 		if err := DB.Close(); err != nil {
 			log.Printf("Fehler beim Schließen der Datenbank: %v", err)
 		} else {
-			log.Println(" Datenbankverbindung geschlossen.")
+			log.Println("Datenbankverbindung geschlossen.")
 		}
 	}
-}
-
-func ReadUsers() map[string]string {
-	// Verbindungsprüfung, falls Connect fehlschlägt, direkt nil zurückgeben
-	if err := Connect(); err != nil {
-		log.Println("Fehler bei der Verbindung zur Datenbank:", err)
-		return nil
-	}
-
-	rows, err := DB.Query("SELECT Username, Email FROM User")
-	if err != nil {
-		log.Fatalf("Fehler beim Abrufen der Benutzer: %v", err)
-	}
-	defer rows.Close()
-
-	userMap := make(map[string]string)
-	for rows.Next() {
-		var email, username string
-		if err := rows.Scan(&username, &email); err != nil {
-			log.Println("Fehler beim Lesen einer Zeile:", err)
-			continue
-		}
-		userMap[username] = email
-	}
-	fmt.Println(userMap)
-	return userMap
 }
 
 func CreateUser(username, password, email string) {
-	if err := Connect(); err != nil {
-		log.Fatalf("Fehler bei der Verbindung zur Datenbank: %v", err)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatalf("Fehler beim Hashen des Passworts: %v", err)
 	}
 
-	// Verwende Exec für INSERT-Befehle
-	_, err := DB.Exec("INSERT INTO User (Username, Email, Password) VALUES (?, ?, ?)", username, email, password)
+	_, err = DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, hashedPassword)
 	if err != nil {
 		log.Fatalf("Fehler beim Erstellen des Users: %v", err)
 	} else {
 		log.Println("Benutzer erfolgreich erstellt")
 	}
+}
+
+func ValidateUser(email, password string) bool {
+	var storedHash string
+	err := DB.QueryRow("SELECT password FROM users WHERE email = ?", email).Scan(&storedHash)
+	if err != nil {
+		log.Println("Benutzer nicht gefunden oder Fehler:", err)
+		return false
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password))
+	if err != nil {
+		log.Println("Passwort stimmt nicht")
+		return false
+	}
+
+	return true
+}
+func GetUserIDByEmail(email string) (uint64, error) {
+	var id uint64
+	err := DB.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("User-ID konnte nicht gefunden werden: %v", err)
+	}
+	return id, nil
+}
+
+func StoreToken(userID uint64, token string, issuedAt, expiresAt time.Time) error {
+	_, err := DB.Exec(
+		"INSERT INTO tokens (user_id, token, issued_at, expires_at) VALUES (?, ?, ?, ?)",
+		userID, token, issuedAt, expiresAt,
+	)
+	if err != nil {
+		return fmt.Errorf("Fehler beim Speichern des Tokens: %v", err)
+	}
+	log.Printf("📝 Token f\u00fcr user_id %d gespeichert\n", userID)
+	return nil
+}
+func DeleteToken(token string) error {
+	_, err := DB.Exec("DELETE FROM tokens WHERE token = ?", token)
+	return err
 }
