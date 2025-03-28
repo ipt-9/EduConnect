@@ -480,8 +480,9 @@ go.work.sum
 
 # env file
 .env
+configuration.env
 
 # JetBrains Rider
 *.sln.iml
 
-configuration.env
+
