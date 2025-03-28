@@ -97,3 +97,34 @@ func DeleteToken(token string) error {
 	_, err := DB.Exec("DELETE FROM tokens WHERE token = ?", token)
 	return err
 }
+func Store2FACode(userID uint64, code string, expiresAt time.Time) error {
+	_, err := DB.Exec(`
+		INSERT INTO email_2fa_tokens (user_id, code, expires_at)
+		VALUES (?, ?, ?)
+	`, userID, code, expiresAt)
+	if err != nil {
+		return fmt.Errorf("Fehler beim Speichern des 2FA-Codes: %v", err)
+	}
+	log.Printf("📧 2FA-Code für user_id %d gespeichert\n", userID)
+	return nil
+}
+
+func Validate2FACode(userID uint64, code string) bool {
+	var count int
+	err := DB.QueryRow(`
+		SELECT COUNT(*) FROM email_2fa_tokens 
+		WHERE user_id = ? AND code = ? AND expires_at > NOW()
+	`, userID, code).Scan(&count)
+	if err != nil {
+		log.Printf("Fehler bei der 2FA-Code-Prüfung: %v", err)
+		return false
+	}
+	return count > 0
+}
+func Delete2FACode(userID uint64) error {
+	_, err := DB.Exec("DELETE FROM email_2fa_tokens WHERE user_id = ?", userID)
+	if err != nil {
+		log.Printf("Fehler beim Löschen des 2FA-Codes: %v", err)
+	}
+	return err
+}
