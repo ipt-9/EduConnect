@@ -1,0 +1,45 @@
+<!-- coding-space.component.html -->
+<div class="layout">
+  <!-- Left Panel -->
+  <div class="left-pane">
+    <div class="editor-card">
+      <div class="file-header">
+        file.py
+        <button id="runBtn" class="run-btn">▶ Run</button>
+      </div>
+      <div class="editor-wrapper">
+        <div class="line-numbers" id="lineNumbers">1</div>
+        <div class="code-area" id="codeArea">
+          <span id="codeText" contenteditable="true" spellcheck="false"></span><span id="ghost" class="ghost"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="compiler-card">
+      <h4>🛠 Compiler Output</h4>
+      <div class="output">✨ Compilation successful.</div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-pane glass">
+    <h2>📄 Problem: Merge Two Arrays</h2>
+    <p>
+      Merge <code>nums1</code> and <code>nums2</code> into a single array sorted in non-decreasing order.
+    </p>
+    <pre>
+Input:
+nums1 = [1,2,3,0,0,0], m = 3
+nums2 = [2,5,6], n = 3
+
+Output:
+[1,2,2,3,5,6]
+    </pre>
+    <p><strong>Constraints:</strong></p>
+    <ul>
+      <li><code>nums1.length == m + n</code></li>
+      <li><code>nums2.length == n</code></li>
+      <li>0 ≤ m, n ≤ 200</li>
+    </ul>
+  </div>
+</div>
