@@ -23,6 +23,7 @@ func Send2FACode(userID uint64, recipientEmail string) error {
 
 	err := DB.Store2FACode(userID, code, expiresAt)
 	if err != nil {
+		log.Printf("❌ Fehler beim Speichern des 2FA-Codes: %v", err)
 		return err
 	}
 
