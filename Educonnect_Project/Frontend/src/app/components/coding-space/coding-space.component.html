@@ -1,5 +1,4 @@
-<!-- coding-space.component.html -->
-<div class="layout">
+<div class="layout" *ngIf="task">
   <!-- Left Panel -->
   <div class="left-pane">
     <div class="editor-card">
@@ -10,7 +9,8 @@
       <div class="editor-wrapper">
         <div class="line-numbers" id="lineNumbers">1</div>
         <div class="code-area" id="codeArea">
-          <span id="codeText" contenteditable="true" spellcheck="false"></span><span id="ghost" class="ghost"></span>
+          <span id="codeText" contenteditable="true" spellcheck="false"></span>
+          <span id="ghost" class="ghost"></span>
         </div>
       </div>
     </div>
@@ -23,23 +23,22 @@
 
   <!-- Right Panel -->
   <div class="right-pane glass">
-    <h2>📄 Problem: Merge Two Arrays</h2>
-    <p>
-      Merge <code>nums1</code> and <code>nums2</code> into a single array sorted in non-decreasing order.
-    </p>
-    <pre>
-Input:
-nums1 = [1,2,3,0,0,0], m = 3
-nums2 = [2,5,6], n = 3
+    <h2>📄 Problem: {{ task.title }}</h2>
+    <p>{{ task.description }}</p>
 
-Output:
-[1,2,2,3,5,6]
+    <pre *ngIf="task.expected_input">
+Input:
+{{ task.expected_input }}
     </pre>
-    <p><strong>Constraints:</strong></p>
-    <ul>
-      <li><code>nums1.length == m + n</code></li>
-      <li><code>nums2.length == n</code></li>
-      <li>0 ≤ m, n ≤ 200</li>
+
+    <pre *ngIf="task.expected_output">
+Output:
+{{ task.expected_output }}
+    </pre>
+
+    <p *ngIf="task.constraints"><strong>Constraints:</strong></p>
+    <ul *ngIf="task.constraints">
+      <li *ngFor="let c of task.constraints">{{ c }}</li>
     </ul>
   </div>
 </div>

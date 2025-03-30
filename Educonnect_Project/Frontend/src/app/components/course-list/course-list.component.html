@@ -1,0 +1,15 @@
+<div *ngIf="courses.length > 0; else loading">
+  <h2>📚 Deine Kurse</h2>
+  <ul>
+    <li *ngFor="let course of courses" (click)="openCourse(course.id)">
+      <strong>{{ course.programming_language }}</strong><br>
+      {{ course.description }}<br>
+      <span *ngIf="course.completed">✅ Abgeschlossen</span>
+      <span *ngIf="!course.started">🕒 Noch nicht gestartet</span>
+    </li>
+  </ul>
+</div>
+
+<ng-template #loading>
+  <p>Lade Kurse...</p>
+</ng-template>
