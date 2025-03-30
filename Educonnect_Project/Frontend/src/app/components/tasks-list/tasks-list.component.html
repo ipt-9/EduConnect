@@ -1,0 +1,17 @@
+<h2>🧠 Aufgaben für Kurs 1</h2>
+
+<ul *ngIf="tasks && tasks.length > 0; else loading">
+  <li
+    *ngFor="let task of tasks"
+    (click)="openTask(task)"
+    style="cursor: pointer; margin-bottom: 1rem; border: 1px solid #444; padding: 0.5rem; border-radius: 6px;"
+  >
+    <strong>{{ task.title }}</strong><br />
+    <small>{{ task.description }}</small><br />
+    <span *ngIf="task.completed" style="color: green;">✅ Erledigt</span>
+  </li>
+</ul>
+
+<ng-template #loading>
+  <p>⏳ Lade Aufgaben...</p>
+</ng-template>
