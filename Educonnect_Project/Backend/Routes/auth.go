@@ -23,7 +23,20 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// 👇 Gemeinsame CORS-Funktion
+func enableCORS(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*") // In Produktion: http://localhost:4200
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+}
+
 func Register(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
@@ -50,6 +63,12 @@ func Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
@@ -82,6 +101,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Protected(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		http.Error(w, "Authorization Header fehlt oder ist ungültig", http.StatusUnauthorized)
@@ -104,6 +130,13 @@ func Protected(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		http.Error(w, "Authorization Header fehlt oder ist ungültig", http.StatusUnauthorized)
@@ -112,14 +145,12 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
-	// Token löschen
 	err := DB.DeleteToken(tokenStr)
 	if err != nil {
 		http.Error(w, "Fehler beim Logout", http.StatusInternalServerError)
 		return
 	}
 
-	// Optional: E-Mail aus Token extrahieren → userID holen
 	claims := &Claims{}
 	_, err = jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
@@ -135,6 +166,12 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func Verify2FA(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
@@ -161,7 +198,6 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ✅ Token erstellen
 	expirationTime := time.Now().Add(15 * time.Minute)
 	claims := &Claims{
 		Email: data.Email,
@@ -176,14 +212,12 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ✅ Token speichern
 	err = DB.StoreToken(userID, tokenString, time.Now(), expirationTime)
 	if err != nil {
 		http.Error(w, "Fehler beim Speichern des Tokens", http.StatusInternalServerError)
 		return
 	}
 
-	// ✅ 2FA-Code löschen
 	DB.Delete2FACode(userID)
 
 	w.Header().Set("Content-Type", "application/json")
