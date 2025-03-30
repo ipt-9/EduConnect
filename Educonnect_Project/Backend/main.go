@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
 	"github.com/ipt-9/EduConnect/DB"
 	"github.com/ipt-9/EduConnect/Routes"
 	"github.com/joho/godotenv"
@@ -19,12 +20,21 @@ func main() {
 		log.Fatal("❌ Fehler beim Laden der .env Datei")
 	}
 
-	http.HandleFunc("/register", routes.Register)
-	http.HandleFunc("/login", routes.Login)
-	http.HandleFunc("/protected", routes.Protected)
-	http.HandleFunc("/logout", routes.Logout)
-	http.HandleFunc("/verify-2fa", routes.Verify2FA)
+	r := mux.NewRouter()
+	routes.InitJWT()
+
+	// 📌 Alle bisherigen Routen
+	r.HandleFunc("/register", routes.Register).Methods("POST", "OPTIONS")
+	r.HandleFunc("/login", routes.Login).Methods("POST", "OPTIONS")
+	r.HandleFunc("/protected", routes.Protected).Methods("GET", "OPTIONS")
+	r.HandleFunc("/logout", routes.Logout).Methods("POST", "OPTIONS")
+	r.HandleFunc("/verify-2fa", routes.Verify2FA).Methods("POST", "OPTIONS")
+	r.HandleFunc("/me", routes.Me).Methods("GET", "OPTIONS")
+	r.HandleFunc("/my-courses", routes.GetMyCourses).Methods("GET", "OPTIONS")
+
+	// 🆕 Neue REST-Route mit Pfadparameter
+	r.HandleFunc("/courses/{id}/tasks", routes.GetTasksByCourse).Methods("GET", "OPTIONS")
 
 	log.Println("🚀 Server läuft auf http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", r)
 }

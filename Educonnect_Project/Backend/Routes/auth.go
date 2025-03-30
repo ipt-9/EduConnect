@@ -2,16 +2,22 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/ipt-9/EduConnect/2fa"
 	"github.com/ipt-9/EduConnect/DB"
+	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 )
 
-var jwtKey = []byte(os.Getenv("JWT_SECRET"))
+var jwtKey []byte
+
+func InitJWT() {
+	jwtKey = []byte(os.Getenv("JWT_SECRET"))
+}
 
 type Credentials struct {
 	Email    string `json:"email"`
@@ -23,16 +29,14 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// 👇 Gemeinsame CORS-Funktion
 func enableCORS(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*") // In Produktion: http://localhost:4200
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
-
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -47,8 +51,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username := r.FormValue("username")
-	email := r.FormValue("email")
+	username := strings.TrimSpace(r.FormValue("username"))
+	email := strings.TrimSpace(r.FormValue("email"))
 	password := r.FormValue("password")
 
 	if len(username) < 3 || email == "" || len(password) < 8 {
@@ -56,15 +60,47 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	DB.CreateUser(username, password, email)
+	optional := func(val string) *string {
+		val = strings.TrimSpace(val)
+		if val == "" {
+			return nil
+		}
+		return &val
+	}
+
+	legalName := optional(r.FormValue("legal_name"))
+	phoneNumber := optional(r.FormValue("phone_number"))
+	address := optional(r.FormValue("address"))
+	profilePictureUrl := optional(r.FormValue("profile_picture_url"))
+
+	err := DB.CreateUser(username, email, password, legalName, phoneNumber, address, profilePictureUrl)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Fehler bei der Registrierung: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// 🔐 Benutzer-ID abrufen
+	userID, err := DB.GetUserIDByEmail(email)
+	if err != nil {
+		log.Println("❌ GetUserIDByEmail-Fehler:", err)
+		http.Error(w, "Benutzer wurde erstellt, aber konnte nicht gefunden werden", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("🧠 Benutzer-ID gefunden: %d", userID)
+
+	// 🧠 Standardkurs ("Basic Python" mit id = 1) automatisch zuweisen
+	if err := DB.AssignDefaultCourseToUser(userID); err != nil {
+		http.Error(w, "Fehler beim automatischen Zuweisen des Kurses", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("User registered successfully"))
+	w.Write([]byte("✅ User registered successfully (Basic Python hinzugefügt)"))
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
-
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -102,7 +138,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func Protected(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
-
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -131,7 +166,6 @@ func Protected(w http.ResponseWriter, r *http.Request) {
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
-
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -144,7 +178,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-
 	err := DB.DeleteToken(tokenStr)
 	if err != nil {
 		http.Error(w, "Fehler beim Logout", http.StatusInternalServerError)
@@ -167,7 +200,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 func Verify2FA(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
-
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -187,6 +219,8 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("✅ 2FA verifiziert – JWT wird erstellt für:", data.Email)
+
 	userID, err := DB.GetUserIDByEmail(data.Email)
 	if err != nil {
 		http.Error(w, "Benutzer nicht gefunden", http.StatusBadRequest)
@@ -205,6 +239,8 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
 	}
+	log.Printf("🧾 JWT Claims: email=%s, exp=%v\n", claims.Email, claims.ExpiresAt)
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
@@ -222,4 +258,51 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
+}
+
+func Me(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		http.Error(w, "Authorization Header fehlt oder ist ungültig", http.StatusUnauthorized)
+		return
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "Ungültiges oder abgelaufenes Token", http.StatusUnauthorized)
+		return
+	}
+
+	log.Println("🔍 Token erhalten:", tokenStr)
+	log.Println("📧 Email aus Token:", claims.Email)
+
+	if claims.Email == "" {
+		http.Error(w, "Token enthält keine E-Mail", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := DB.GetUserByEmail(claims.Email)
+	if err != nil {
+		http.Error(w, "Benutzer nicht gefunden", http.StatusInternalServerError)
+		return
+	}
+
+	user.PasswordHash = ""
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }
