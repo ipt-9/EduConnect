@@ -1,54 +1,75 @@
-<nav class="navbar">
-  <div class="logo">
-    <img src="/Screenshot 2025-03-25 104226.png" alt="logo" />
-    <span>EDUCONNECT</span>
-  </div>
-  <div class="nav-links">
-    <a href="#">Features</a>
-    <a href="#">Pricing</a>
-    <a href="#">About Us</a>
-  </div>
-  <div class="nav-actions">
-    <button class="login-btn">Customer Login</button>
-    <a href="#" class="signup-link">Sign up</a>
-  </div>
-</nav>
-
-<main>
-  <div class="register-container">
-    <div class="left-box">
-      <img class="icon" src="/Screenshot 2025-03-25 104226.png" alt="logo" />
-      <h2>EduConnect</h2>
-      <p class="tagline">Your gateway to educational excellence</p>
-      <p class="student-label">Studentkey (optional)</p>
-      <div class="student-input">
-        <input type="text" placeholder="Enter your private key!">
-        <button class="lock-btn">🔒</button>
-      </div>
+  <nav class="navbar">
+    <div class="logo">
+      <img src="/Screenshot 2025-03-25 104226.png" alt="logo" />
+      <span>EDUCONNECT</span>
     </div>
+    <div class="nav-links">
+      <a href="#">Features</a>
+      <a href="#">Pricing</a>
+      <a href="#">About Us</a>
+    </div>
+    <div class="nav-actions">
+      <button class="login-btn">Customer Login</button>
+      <a href="#" class="signup-link">Sign up</a>
+    </div>
+  </nav>
 
-    <div class="right-box">
-      <h2>Create Account</h2>
-      <form>
-        <label for="username">Username</label>
-        <input type="text" id="username" placeholder="@educonnect5" required>
-
-        <label for="email">E-Mail</label>
-        <input type="email" id="email" placeholder="example@educonnect.com" required>
-
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Example_123" required>
-
-        <button type="submit" class="register-btn">Register</button>
-      </form>
-
-      <div class="social-icons">
-        <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google" />
-        <img src="https://img.icons8.com/fluency/48/facebook-new.png" alt="Facebook" />
-        <img src="https://img.icons8.com/color/48/twitter--v1.png" alt="Twitter" />
+  <main>
+    <div class="register-container">
+      <div class="left-box">
+        <img class="icon" src="/Screenshot 2025-03-25 104226.png" alt="logo" />
+        <h2>EduConnect</h2>
+        <p class="tagline">Your gateway to educational excellence</p>
+        <p class="student-label">Studentkey (optional)</p>
+        <div class="student-input">
+          <input type="text" placeholder="Enter your private key!">
+          <button class="lock-btn">🔒</button>
+        </div>
       </div>
 
-      <p class="login-text">already a member? <a href="#">Log in</a> here</p>
+      <div class="right-box">
+        <h2>Create Account</h2>
+        <form (ngSubmit)="register()">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" [(ngModel)]="username" placeholder="@educonnect5" required>
+
+          <label for="email">E-Mail</label>
+          <input type="email" id="email" name="email" [(ngModel)]="email" placeholder="example@educonnect.com" required>
+
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" [(ngModel)]="password" placeholder="Example_123" required>
+
+          <button type="submit" class="register-btn">Register</button>
+          <!-- Lade-Spinner -->
+          <div *ngIf="loading" class="spinner-container">
+            <div class="spinner"></div>
+            <p>Lade...</p>
+          </div>
+
+          <!-- Erfolgs-Icon -->
+          <div *ngIf="!loading && successMessage.startsWith('✅')" class="success-animation">
+            <div class="checkmark">
+              ✓
+            </div>
+            <p class="message success">{{ successMessage }}</p>
+          </div>
+
+          <!-- Fehler -->
+          <p *ngIf="!loading && successMessage.startsWith('❌')" class="message error">
+            {{ successMessage }}
+          </p>
+
+
+        </form>
+
+
+        <div class="social-icons">
+          <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google" />
+          <img src="https://img.icons8.com/fluency/48/facebook-new.png" alt="Facebook" />
+          <img src="https://img.icons8.com/color/48/twitter--v1.png" alt="Twitter" />
+        </div>
+
+        <p class="login-text">already a member? <a href="#">Log in</a> here</p>
+      </div>
     </div>
-  </div>
-</main>
+  </main>
