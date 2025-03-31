@@ -23,7 +23,6 @@ func main() {
 	r := mux.NewRouter()
 	routes.InitJWT()
 
-	// 📌 Alle bisherigen Routen
 	r.HandleFunc("/register", routes.Register).Methods("POST", "OPTIONS")
 	r.HandleFunc("/login", routes.Login).Methods("POST", "OPTIONS")
 	r.HandleFunc("/protected", routes.Protected).Methods("GET", "OPTIONS")
@@ -31,9 +30,8 @@ func main() {
 	r.HandleFunc("/verify-2fa", routes.Verify2FA).Methods("POST", "OPTIONS")
 	r.HandleFunc("/me", routes.Me).Methods("GET", "OPTIONS")
 	r.HandleFunc("/my-courses", routes.GetMyCourses).Methods("GET", "OPTIONS")
-
-	// 🆕 Neue REST-Route mit Pfadparameter
 	r.HandleFunc("/courses/{id}/tasks", routes.GetTasksByCourse).Methods("GET", "OPTIONS")
+	r.HandleFunc("/submit", routes.SubmitTaskSolution).Methods("POST", "OPTIONS")
 
 	log.Println("🚀 Server läuft auf http://localhost:8080")
 	http.ListenAndServe(":8080", r)

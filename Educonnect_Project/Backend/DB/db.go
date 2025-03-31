@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -275,4 +276,167 @@ func GetTasksForCourse(courseID uint64, userID uint64) ([]TaskWithProgress, erro
 		tasks = append(tasks, task)
 	}
 	return tasks, nil
+}
+
+type SubmissionInput struct {
+	UserID          uint64  `json:"-"`
+	TaskID          uint64  `json:"task_id"`
+	Code            string  `json:"code"`
+	Output          string  `json:"output"`
+	ErrorMessage    *string `json:"error_message"`
+	ExecutionTimeMs *int    `json:"execution_time_ms"`
+	UsedHint        *bool   `json:"used_hint"`
+	Tip             *string `json:"tip,omitempty"`
+}
+
+func SaveSubmissionAndUpdateProgress(input SubmissionInput) (uint64, error) {
+	log.Printf("💾 Submission verarbeiten für user_id=%d, task_id=%d", input.UserID, input.TaskID)
+
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Printf("❌ Fehler bei Transaktionsstart: %v", err)
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	// 1. expected_output abrufen
+	var expectedOutput string
+	err = tx.QueryRow(`SELECT expected_output FROM tasks WHERE id = ?`, input.TaskID).Scan(&expectedOutput)
+	if err != nil {
+		log.Printf("❌ Fehler beim expected_output-Query: %v", err)
+		return 0, err
+	}
+
+	// 2. Output vergleichen
+	clean := func(s string) string {
+		return strings.TrimSpace(strings.ReplaceAll(s, "\r", ""))
+	}
+	isCorrect := clean(input.Output) == clean(expectedOutput)
+
+	var submissionID uint64 = 0
+
+	// 3. Submission speichern, aber nur bei Erfolg
+	if isCorrect {
+		log.Printf("✅ Output korrekt – Submission wird gespeichert")
+
+		stmt, err := tx.Prepare(`
+			INSERT INTO submissions 
+			(user_id, task_id, code, submitted_at, is_successful, output, error_message, execution_time_ms, tip) 
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`)
+		if err != nil {
+			log.Printf("❌ Fehler bei Prepare: %v", err)
+			return 0, err
+		}
+		defer stmt.Close()
+
+		// Optional-Felder behandeln
+		var errMsg interface{}
+		if input.ErrorMessage != nil {
+			errMsg = *input.ErrorMessage
+		} else {
+			errMsg = nil
+		}
+
+		var execTime interface{}
+		if input.ExecutionTimeMs != nil {
+			execTime = *input.ExecutionTimeMs
+		} else {
+			execTime = nil
+		}
+
+		var tip interface{}
+		if input.Tip != nil {
+			tip = *input.Tip
+		} else {
+			tip = nil
+		}
+
+		res, err := stmt.Exec(
+			input.UserID,
+			input.TaskID,
+			input.Code,
+			time.Now(),
+			true,
+			input.Output,
+			errMsg,
+			execTime,
+			tip,
+		)
+		if err != nil {
+			log.Printf("❌ Fehler bei Insert Submission: %v", err)
+			return 0, err
+		}
+
+		lastID, err := res.LastInsertId()
+		if err != nil {
+			log.Printf("❌ Fehler bei LastInsertId: %v", err)
+			return 0, err
+		}
+		submissionID = uint64(lastID)
+		log.Printf("📥 Submission-ID %d gespeichert", submissionID)
+	} else {
+		log.Printf("⚠️ Output falsch – nur Fortschritt wird gespeichert")
+	}
+
+	// 4. Fortschritt aktualisieren oder anlegen (immer)
+	var usedHint bool
+	if input.UsedHint != nil {
+		usedHint = *input.UsedHint
+	} else {
+		usedHint = false
+	}
+
+	var progressID uint64
+	err = tx.QueryRow(`
+		SELECT id FROM user_task_progress 
+		WHERE user_id = ? AND task_id = ?
+	`, input.UserID, input.TaskID).Scan(&progressID)
+
+	if err == sql.ErrNoRows {
+		log.Printf("ℹ️ Kein Fortschritt gefunden → neuer Eintrag")
+		_, err = tx.Exec(`
+	INSERT INTO user_task_progress 
+	(user_id, task_id, completed, last_submission_id, used_hint, last_attempt_code) 
+	VALUES (?, ?, ?, ?, ?, ?)
+`, input.UserID, input.TaskID, isCorrect,
+			sql.NullInt64{Int64: int64(submissionID), Valid: submissionID != 0},
+			usedHint,
+			input.Code, // neuer Wert hier
+		)
+
+		if err != nil {
+			log.Printf("❌ Fehler bei Insert user_task_progress: %v", err)
+			return 0, err
+		}
+	} else if err == nil {
+		log.Printf("🔄 Bestehender Fortschritt wird aktualisiert")
+		_, err = tx.Exec(`
+	UPDATE user_task_progress 
+	SET completed = ?, last_submission_id = ?, used_hint = ?, last_attempt_code = ? 
+	WHERE user_id = ? AND task_id = ?
+`, isCorrect,
+			sql.NullInt64{Int64: int64(submissionID), Valid: submissionID != 0},
+			usedHint,
+			input.Code, // neuer Wert hier
+			input.UserID,
+			input.TaskID,
+		)
+		if err != nil {
+			log.Printf("❌ Fehler bei Update user_task_progress: %v", err)
+			return 0, err
+		}
+	} else {
+		log.Printf("❌ Fehler beim Prüfen von user_task_progress: %v", err)
+		return 0, err
+	}
+
+	// 5. Commit & fertig
+	if err := tx.Commit(); err != nil {
+		log.Printf("❌ Fehler beim Commit: %v", err)
+		return 0, err
+	}
+
+	log.Printf("✅ Fortschritt gespeichert (submission_id: %d)", submissionID)
+	return submissionID, nil
 }
