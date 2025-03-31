@@ -35,4 +35,8 @@ export class TasksListComponent implements OnInit {
     localStorage.setItem('activeTask', JSON.stringify(task));
     window.location.href = '/codingSpace';
   }
+  goBack(): void {
+    window.location.href = '/courselist'
+  }
+
 }

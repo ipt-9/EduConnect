@@ -1,0 +1,154 @@
+.course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 1rem 2rem;
+
+  h1 {
+    font-size: 2rem;
+    margin: 0;
+  }
+
+  h2 {
+    font-weight: normal;
+    font-size: 1rem;
+
+    .highlight {
+      color: #ff5722;
+      font-weight: bold;
+    }
+
+    strong {
+      color: black;
+    }
+  }
+}
+
+.course-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 2rem;
+  flex-wrap: wrap;
+
+  .search-input {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+  }
+
+  .filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+
+    .filter {
+      padding: 0.4rem 0.8rem;
+      background-color: #fbeee0;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+  }
+
+  .filter-dropdown {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+}
+
+.course-grid {
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.course-card {
+  background-color: #1e1e1e;
+  color: white;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  position: relative;
+  transition: transform 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  h3 {
+    margin-top: 0;
+    font-size: 1.2rem;
+  }
+
+  p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+
+  .status {
+    margin: 0.5rem 0;
+
+    .completed {
+      background-color: #ff7043;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+    }
+
+    .not-started, .in-progress {
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+  }
+
+  .progress-info {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .meta-line {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+
+    .tag {
+      background: #333;
+      border-radius: 6px;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.7rem;
+    }
+  }
+
+  .avatars {
+    margin-top: 0.5rem;
+
+    img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid white;
+      margin-right: -6px;
+    }
+  }
+
+  .continue-btn {
+    margin-top: 1rem;
+    background-color: #ff5722;
+    border: none;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+
+    &:hover {
+      background-color: #e64a19;
+    }
+  }
+}

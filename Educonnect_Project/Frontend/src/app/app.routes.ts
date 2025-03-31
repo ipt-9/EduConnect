@@ -8,6 +8,7 @@ import {CodingSpaceComponent} from './components/coding-space/coding-space.compo
 import {CourseListComponent} from './components/course-list/course-list.component';
 import {TasksListComponent} from './components/tasks-list/tasks-list.component';
 import {AuthGuard} from './auth.guard';
+import {SidebarComponent} from './components/sidebar/sidebar.component';
 
 export const routes: Routes = [
   { path: '', component: HomepageComponent },
@@ -17,5 +18,6 @@ export const routes: Routes = [
   { path: 'contact', component: ContactComponent, canActivate: [AuthGuard] },
   { path: 'errorpage', component: ErrorpageComponent, canActivate: [AuthGuard] },
     { path: 'courselist', component: CourseListComponent, canActivate: [AuthGuard] },
-    { path: 'taskslist', component: TasksListComponent, canActivate: [AuthGuard] }
+    { path: 'taskslist', component: TasksListComponent, canActivate: [AuthGuard] },
+  { path: 'sidebar', component: SidebarComponent },
 ];
