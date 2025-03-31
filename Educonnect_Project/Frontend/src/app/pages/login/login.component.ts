@@ -74,7 +74,7 @@ export class LoginComponent {
 
         setTimeout(() => {
           this.showSuccessAnimation = false;
-          this.router.navigate(['/homepage']);
+          this.router.navigate(['/courselist']);
         }, 2000);
 
       },

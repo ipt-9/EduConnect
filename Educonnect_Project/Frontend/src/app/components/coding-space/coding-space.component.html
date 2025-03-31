@@ -1,44 +1,81 @@
-<div class="layout" *ngIf="task">
-  <!-- Left Panel -->
-  <div class="left-pane">
-    <div class="editor-card">
-      <div class="file-header">
-        file.py
-        <button id="runBtn" class="run-btn">▶ Run</button>
-      </div>
-      <div class="editor-wrapper">
-        <div class="line-numbers" id="lineNumbers">1</div>
-        <div class="code-area" id="codeArea">
-          <span id="codeText" contenteditable="true" spellcheck="false"></span>
-          <span id="ghost" class="ghost"></span>
+  <div class="layout" *ngIf="task">
+    <!-- Left Panel -->
+    <div class="left-pane">
+      <div class="editor-card">
+        <div class="file-header">
+          file.py
+          <button id="runBtn" class="run-btn">▶ Run</button>
+        </div>
+        <div class="editor-wrapper">
+          <div class="line-numbers" id="lineNumbers">1</div>
+          <div class="code-area" id="codeArea">
+      <span id="codeText" contenteditable="true" spellcheck="false">
+        <ng-container *ngIf="!isLoadingCode; else loadingCode">
+          <!-- Code wird später durch innerText eingesetzt -->
+        </ng-container>
+        <ng-template #loadingCode>🕓 Code wird geladen…</ng-template>
+      </span>
+            <span id="ghost" class="ghost"></span>
+          </div>
         </div>
       </div>
+
+      <div class="compiler-card">
+        <h4>🛠 Compiler Output</h4>
+        <div class="output">✨ Compilation successful.</div>
+
+        <button class="submit-btn" (click)="submitSolution()">📤 Aufgabe abgeben</button>
+      </div>
+      <div *ngIf="submitMessage" [ngStyle]="{
+      color: submitSuccess ? '#00cc88' : '#ff4d4d',
+      fontWeight: 'bold',
+      marginTop: '12px',
+      fontSize: '0.95rem'
+      }">
+        {{ submitMessage }}
+      </div>
+
     </div>
 
-    <div class="compiler-card">
-      <h4>🛠 Compiler Output</h4>
-      <div class="output">✨ Compilation successful.</div>
+    <!-- Right Panel -->
+    <div class="right-pane glass">
+      <h2>📄 Problem: {{ task.title }}</h2>
+      <p>{{ task.description }}</p>
+
+      <pre *ngIf="task.expected_input">
+  Input:
+  {{ task.expected_input }}
+      </pre>
+
+      <pre *ngIf="task.expected_output">
+  Output:
+  {{ task.expected_output }}
+      </pre>
+
+      <p *ngIf="task.constraints"><strong>Constraints:</strong></p>
+      <ul *ngIf="task.constraints">
+        <li *ngFor="let c of task.constraints">{{ c }}</li>
+      </ul>
+      <div class="timer-display">
+        ⏱ Bearbeitungszeit: {{ formattedTime }}
+      </div>
+
+      <!-- Reset-Button nur anzeigen, wenn nicht erfolgreich gelöst -->
+      <button 
+        *ngIf="!task?.is_successful"
+        (click)="resetTimer()"
+        class="reset-btn"
+      >
+        ⏮ Zurücksetzen
+      </button>
+
+      <!-- Zurück zu Aufgabenliste Button -->
+      <button
+        (click)="goBackToTasks()"
+        class="back-btn"
+      >
+        ⬅️ Zurück zur Aufgabenliste
+      </button>
+
     </div>
   </div>
-
-  <!-- Right Panel -->
-  <div class="right-pane glass">
-    <h2>📄 Problem: {{ task.title }}</h2>
-    <p>{{ task.description }}</p>
-
-    <pre *ngIf="task.expected_input">
-Input:
-{{ task.expected_input }}
-    </pre>
-
-    <pre *ngIf="task.expected_output">
-Output:
-{{ task.expected_output }}
-    </pre>
-
-    <p *ngIf="task.constraints"><strong>Constraints:</strong></p>
-    <ul *ngIf="task.constraints">
-      <li *ngFor="let c of task.constraints">{{ c }}</li>
-    </ul>
-  </div>
-</div>
