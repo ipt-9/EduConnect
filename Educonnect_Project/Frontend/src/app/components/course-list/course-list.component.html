@@ -1,15 +1,47 @@
-<div *ngIf="courses.length > 0; else loading">
-  <h2>📚 Deine Kurse</h2>
-  <ul>
-    <li *ngFor="let course of courses" (click)="openCourse(course.id)">
-      <strong>{{ course.programming_language }}</strong><br>
-      {{ course.description }}<br>
-      <span *ngIf="course.completed">✅ Abgeschlossen</span>
-      <span *ngIf="!course.started">🕒 Noch nicht gestartet</span>
-    </li>
-  </ul>
+<div class="course-header">
+  <h1>Course</h1>
+  <h2>discover <strong>free</strong> courses from <span class="highlight">EduConnect</span></h2>
 </div>
 
-<ng-template #loading>
-  <p>Lade Kurse...</p>
-</ng-template>
+<!-- Filterleiste -->
+<div class="course-filter-bar">
+  <input type="text" placeholder="🔍 Search" class="search-input" />
+  <div class="filter-buttons">
+    <button class="filter">Beginner</button>
+    <button class="filter">Easy</button>
+    <button class="filter">Intermediate</button>
+    <button class="filter">Advanced</button>
+    <button class="filter">Expert</button>
+  </div>
+  <select class="filter-dropdown">
+    <option>Last 30 Days</option>
+    <option>Last 7 Days</option>
+    <option>All Time</option>
+  </select>
+</div>
+
+<!-- Kursübersicht -->
+<div class="course-grid">
+  <div class="course-card" *ngFor="let course of courses" (click)="openCourse(course.id)">
+    <h3>{{ course.programming_language }} {{ course.title || 'Getting Started' }}</h3>
+    <p>{{ course.description }}</p>
+
+    <!-- Fortschritt -->
+    <div class="status">
+      <span *ngIf="course.completed" class="completed">Completed</span>
+      <span *ngIf="!course.started" class="not-started">Not Started</span>
+      <span *ngIf="!course.completed && course.started" class="in-progress">In Progress</span>
+    </div>
+
+
+    <!-- Icons / Infozeile -->
+    <div class="meta-line">
+      <span class="tag">✔ {{ course.difficulty || 'Easy' }}</span>
+      <span class="tag">💯 {{ course.programming_language }}</span>
+      <span class="tag">⏳ {{ course.duration || '2 Weeks' }}</span>
+    </div>
+
+    <!-- Button -->
+    <button class="continue-btn">Continue</button>
+  </div>
+</div>

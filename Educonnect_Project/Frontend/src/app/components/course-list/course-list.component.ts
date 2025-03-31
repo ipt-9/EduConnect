@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpClientModule } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { SidebarComponent } from '../sidebar/sidebar.component';
 
 @Component({
   selector: 'app-course-list',
   standalone: true,
-  imports: [HttpClientModule, CommonModule],
+  imports: [HttpClientModule, CommonModule,SidebarComponent],
   templateUrl: './course-list.component.html',
   styleUrls: ['./course-list.component.scss']
 })

@@ -1,16 +1,41 @@
-<h2>🧠 Aufgaben für Kurs 1</h2>
+<!-- Header wie bei courselist -->
+<div class="course-header">
+  <h1>Tasks</h1>
+  <h2>discover <strong>free</strong> courses from <span class="highlight">EduConnect</span></h2>
+</div>
+<button class="back-button" (click)="goBack()">← Get back to Courses</button>
+<!-- Schwarzer Aufgaben-Header -->
+<div class="task-header-box">
+  <div class="task-info">
+    <div class="task-icon">📦</div>
+    <div>
+      <h3>Basics</h3>
+      <p>6/6</p>
+    </div>
+  </div>
+  <button class="view-tasks-btn">View Tasks</button>
+</div>
 
-<ul *ngIf="tasks && tasks.length > 0; else loading">
-  <li
-    *ngFor="let task of tasks"
-    (click)="openTask(task)"
-    style="cursor: pointer; margin-bottom: 1rem; border: 1px solid #444; padding: 0.5rem; border-radius: 6px;"
-  >
-    <strong>{{ task.title }}</strong><br />
-    <small>{{ task.description }}</small><br />
-    <span *ngIf="task.completed" style="color: green;">✅ Erledigt</span>
-  </li>
-</ul>
+<!-- Aufgabenliste -->
+<div class="task-list">
+  <div class="task-card" *ngFor="let task of tasks" (click)="openTask(task)">
+    <div class="task-main">
+      <div class="task-title">{{ task.title }}</div>
+      <div class="task-desc">{{ task.description }}</div>
+    </div>
+    <div class="task-actions">
+      <span class="task-status">
+        <ng-container *ngIf="task.completed; else notDone">✅</ng-container>
+        <ng-template #notDone>⏳</ng-template>
+      </span>
+      <button class="btn edit">Edit</button>
+      <button class="btn submit">Submit</button>
+      <span *ngIf="task.difficulty" class="difficulty-badge" [ngClass]="task.difficulty">
+        {{ task.difficulty | titlecase }}
+      </span>
+    </div>
+  </div>
+</div>
 
 <ng-template #loading>
   <p>⏳ Lade Aufgaben...</p>
