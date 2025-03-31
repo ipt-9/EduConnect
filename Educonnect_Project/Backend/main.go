@@ -32,6 +32,7 @@ func main() {
 	r.HandleFunc("/my-courses", routes.GetMyCourses).Methods("GET", "OPTIONS")
 	r.HandleFunc("/courses/{id}/tasks", routes.GetTasksByCourse).Methods("GET", "OPTIONS")
 	r.HandleFunc("/submit", routes.SubmitTaskSolution).Methods("POST", "OPTIONS")
+	r.HandleFunc("/tasks/{task_id}/submitted-code", routes.GetSubmittedCode).Methods("GET", "OPTIONS")
 
 	log.Println("🚀 Server läuft auf http://localhost:8080")
 	http.ListenAndServe(":8080", r)

@@ -252,10 +252,11 @@ func GetTasksForCourse(courseID uint64, userID uint64) ([]TaskWithProgress, erro
 	rows, err := DB.Query(`
 		SELECT 
 			t.id, t.title, t.description, t.starter_code, t.expected_input, t.expected_output,
-			COALESCE(utp.completed, FALSE) AS completed
+			EXISTS (
+				SELECT 1 FROM submissions s
+				WHERE s.user_id = ? AND s.task_id = t.id AND s.is_successful = 1
+			) AS completed
 		FROM tasks t
-		LEFT JOIN user_task_progress utp 
-		  ON t.id = utp.task_id AND utp.user_id = ?
 		WHERE t.course_id = ?
 	`, userID, courseID)
 	if err != nil {
@@ -308,10 +309,19 @@ func SaveSubmissionAndUpdateProgress(input SubmissionInput) (uint64, error) {
 	}
 
 	// 2. Output vergleichen
+	// 2. Output vergleichen
 	clean := func(s string) string {
 		return strings.TrimSpace(strings.ReplaceAll(s, "\r", ""))
 	}
-	isCorrect := clean(input.Output) == clean(expectedOutput)
+	cleanedUserOutput := clean(input.Output)
+	cleanedExpectedOutput := clean(expectedOutput)
+	isCorrect := cleanedUserOutput == cleanedExpectedOutput
+
+	// ➕ Logging hinzufügen
+	log.Printf("🔎 Vergleich Benutzer-Output vs. Erwartet:")
+	log.Printf("   👉 Benutzer:  '%s'", cleanedUserOutput)
+	log.Printf("   ✅ Erwartet: '%s'", cleanedExpectedOutput)
+	log.Printf("   📊 Ergebnis: %v", isCorrect)
 
 	var submissionID uint64 = 0
 
@@ -439,4 +449,43 @@ func SaveSubmissionAndUpdateProgress(input SubmissionInput) (uint64, error) {
 
 	log.Printf("✅ Fortschritt gespeichert (submission_id: %d)", submissionID)
 	return submissionID, nil
+}
+
+func GetSubmittedCodeForTask(userID, taskID uint64) (string, error) {
+	var code string
+	err := DB.QueryRow(`
+		SELECT code FROM submissions 
+		WHERE user_id = ? AND task_id = ? AND is_successful = 1
+		ORDER BY submitted_at DESC
+		LIMIT 1
+	`, userID, taskID).Scan(&code)
+
+	if err != nil {
+		return "", err
+	}
+	return code, nil
+}
+
+func GetSubmittedOrAttemptedCode(userID, taskID uint64) (string, error) {
+	var code string
+
+	// 1. Zuerst versuchen aus submissions (erfolgreich)
+	err := DB.QueryRow(`
+		SELECT code FROM submissions 
+		WHERE user_id = ? AND task_id = ? AND is_successful = 1
+		ORDER BY submitted_at DESC
+		LIMIT 1
+	`, userID, taskID).Scan(&code)
+
+	if err == nil {
+		return code, nil
+	}
+
+	// 2. Wenn keine erfolgreiche Submission → letzten Versuch aus user_task_progress
+	err = DB.QueryRow(`
+		SELECT last_attempt_code FROM user_task_progress 
+		WHERE user_id = ? AND task_id = ?
+	`, userID, taskID).Scan(&code)
+
+	return code, err
 }

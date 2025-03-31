@@ -28,7 +28,7 @@ export class TasksListComponent implements OnInit {
       error: (err) => {
         console.error('❌ Fehler beim Laden der Tasks:', err);
       }
-    });
+        });
   }
 
   openTask(task: any): void {

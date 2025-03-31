@@ -110,6 +110,7 @@ func GetTasksByCourse(w http.ResponseWriter, r *http.Request) {
 }
 func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -147,6 +148,12 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ✅ Absicherung: Code darf nicht leer sein
+	if strings.TrimSpace(input.Code) == "" {
+		http.Error(w, "Code darf nicht leer sein", http.StatusBadRequest)
+		return
+	}
+
 	input.UserID = userID
 
 	subID, err := DB.SaveSubmissionAndUpdateProgress(input)
@@ -161,5 +168,60 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"submission_id": subID,
 		"success":       success,
+	})
+}
+
+func GetSubmittedCode(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		http.Error(w, "Authorization Header fehlt", http.StatusUnauthorized)
+		return
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "Ungültiges Token", http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := DB.GetUserIDByEmail(claims.Email)
+	if err != nil {
+		http.Error(w, "Benutzer nicht gefunden", http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+	taskIDStr := vars["task_id"]
+	taskID, err := strconv.ParseUint(taskIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Ungültige Task-ID", http.StatusBadRequest)
+		return
+	}
+
+	// 🔁 Holt Code aus Submission (bei Erfolg) oder user_task_progress (bei Fehlschlag)
+	code, err := DB.GetSubmittedOrAttemptedCode(userID, taskID)
+	if err != nil || code == "" {
+		http.Error(w, "Kein Code gefunden", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"code": code,
 	})
 }
