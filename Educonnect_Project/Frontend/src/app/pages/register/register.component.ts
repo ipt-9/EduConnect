@@ -21,6 +21,13 @@ export class RegisterComponent {
 
   constructor(private http: HttpClient, private router: Router) {}
 
+  LoginBtn () {
+    this.router.navigate(['/login']);
+  }
+
+  RegisterBtn () {
+    this.router.navigate(['/register']);
+  }
   register() {
     this.loading = true;
     this.successMessage = '';

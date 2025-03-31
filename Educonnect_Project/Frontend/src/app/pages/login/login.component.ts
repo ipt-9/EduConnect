@@ -24,6 +24,13 @@ export class LoginComponent {
 
   constructor(private http: HttpClient, private router: Router) {}
 
+  LoginBtn () {
+    this.router.navigate(['/login']);
+  }
+
+  RegisterBtn () {
+    this.router.navigate(['/register']);
+  }
   login() {
     this.resetUI();
     this.loading = true;

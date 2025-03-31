@@ -47,9 +47,14 @@ body {
 }
 
 .login {
-  color: #000;
+  color: black;
+  background-color: white;
   text-decoration: none;
   font-size: 14px;
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid #bfbebe;
+  cursor: pointer;
 }
 
 .signup-btn {

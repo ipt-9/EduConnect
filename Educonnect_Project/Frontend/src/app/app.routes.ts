@@ -10,7 +10,7 @@ import {TasksListComponent} from './components/tasks-list/tasks-list.component';
 import {AuthGuard} from './auth.guard';
 
 export const routes: Routes = [
-  { path: 'homepage', component: HomepageComponent, canActivate: [AuthGuard] },
+  { path: '', component: HomepageComponent },
   { path: 'codingSpace', component: CodingSpaceComponent, canActivate: [AuthGuard] },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },

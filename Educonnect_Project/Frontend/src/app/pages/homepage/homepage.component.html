@@ -1,0 +1,380 @@
+<body>
+<div id="tourOverlay" class="tour-overlay"></div>
+<nav class="navbar">
+  <div class="logo">
+    <img src="Screenshot%202025-03-25%20104226.png"/>
+    <span>EDUCONNECT</span>
+  </div>
+  <div class="nav-links">
+    <a href="#Features">Features</a>
+    <a href="#Pricing">Pricing</a>
+    <a href="#About">About Us</a>
+  </div>
+  <div class="nav-actions">
+    <button (click)="LoginBtn()" class="signup-btn login">Login</button>
+    <button class="signup-btn" (click)="RegisterBtn()">Sign up</button>
+  </div>
+</nav>
+
+<div id="onboardingModal" class="popup-overlay" style="display: none;">
+  <div class="popup-box">
+    <img src="group-funko.png" alt="Funko Team" style="width: 100%; border-radius: 8px; margin-bottom: 20px;"/>
+    <h2>👋 Welcome to EduConnect!</h2>
+    <p>We're your dev team – and in Funko style, we're going to guide you through the site.</p>
+    <button (click)="startTour()">Let’s Go!</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="floating-blobs">
+    <div class="floating-blob blob-a" data-speed="0.7"></div>
+    <div class="floating-blob blob-b" data-speed="0.1"></div>
+    <div class="floating-blob blob-c" data-speed="0.3"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-text" data-speed="0.5">
+      <h1>Elevate your coding skills with<br><span>EduConnect.</span></h1>
+      <p>A coding tool made for collaborative work and efficient learning.</p>
+    </div>
+    <div class="hero-image" data-speed="0.3">
+      <img src="/Female%20Web%20Designer%20working%20on%20web%20design.gif" alt="">
+    </div>
+  </div>
+
+  <div class="hero-lines"></div>
+</header>
+
+<section class="features" id="Features">
+  <div class="funko-guide" id="guideStep1" style="display: none;">
+    <img src="/Moritz_FunkoPop.png" alt="Moritz - Guide" class="funko-avatar"/>
+    <div class="speech-wrapper">
+      <div class="speech-bubble" id="guideSpeech">
+      </div>
+      <button class="next-btn" (click)="nextGuideStep()">Next →</button>
+    </div>
+  </div>
+
+
+  <div class="feature-left child-fade" style="transition-delay: 0.2s;">
+    <span class="tag">Code</span>
+    <h2>Use our integrated coding environment.</h2>
+    <p>Write, compile, and debug code directly on our platform with real-time feedback and support. Our
+      environment is designed to make coding seamless and efficient.</p>
+    <ul>
+      <li>✔ Coded</li>
+      <li>✔ 100% Secure</li>
+    </ul>
+    <a href="#" class="learn-link">🔴 See how it works</a>
+  </div>
+  <div class="feature-right fade-in">
+    <img src="/Adobe Express - file.png" alt="Code snippet"/>
+  </div>
+</section>
+
+<section class="features reverse">
+  <div class="funko-guide right" id="guideStep2" style="display: none;">
+    <img src="/Fynn_FunkoPop.png" alt="Fynn - Guide" class="funko-avatar">
+    <div class="speech-wrapper right-align">
+      <div class="speech-bubble" id="guideSpeechFynn">
+      </div>
+      <button class="next-btn" (click)="nextGuideStep()">Next →</button>
+    </div>
+  </div>
+
+
+  <div class="feature-left fade-in">
+    <img src="/Networking.png" alt="Members"/>
+  </div>
+  <div class="feature-right child-fade" style="transition-delay: 0.2s;">
+    <span class="tag orange">Collaborative Learning</span>
+    <h2>Work together with your peers and instructors.</h2>
+    <p>Connect and collaborate in real time, sharing projects, ideas, and feedback. Our platform fosters
+      teamwork and mentorship.</p>
+    <a href="#" class="learn-link">🔴 See how it works</a>
+  </div>
+</section>
+
+<div class="section-container">
+  <div class="funko-guide" id="guideStep3" style="display: none;">
+    <img src="/Dan_FunkoPop.png" alt="Dan - Guide" class="funko-avatar"/>
+    <div class="speech-wrapper">
+      <div class="speech-bubble" id="guideSpeechDan">
+        Yo! I'm Dan — your frontend guy.<br>
+        Let's talk <strong>feedback</strong>. 💬
+      </div>
+      <button class="next-btn" (click)="nextGuideStep()">Next →</button>
+    </div>
+  </div>
+  <section class="feedback-strip improved-feedback" id="Feedback">
+    <div class="feedback-header fade-in">
+      <h5 class="section-subtitle">Student voices</h5>
+      <h2 class="section-title">Community Feedback</h2>
+      <p class="section-description">
+        Discover ideas, feedback, and suggestions from other learners.<br>
+        Collaborate and grow together on EduConnect. 💬
+      </p>
+    </div>
+
+    <div class="main-feedback fade-in">
+      <p><strong>EduConnect</strong> <span> · 2m ago in Brand</span></p>
+      <button class="view-btn">View Feedback</button>
+      <p class="members">3 people are looking for feedback this week →</p>
+    </div>
+
+    <div class="feedback-cards child-fade" style="transition-delay: 0.2s;">
+      <div class="card improved-card">
+        <div class="emoji-circle">📣</div>
+        <h4>Mentions</h4>
+        <p>Mention anyone on your team to pull them in.</p>
+      </div>
+      <div class="card improved-card">
+        <div class="emoji-circle">📊</div>
+        <h4>Polls</h4>
+        <p>Quickly get team input on ideas and design choices.</p>
+      </div>
+      <div class="card improved-card">
+        <div class="emoji-circle">✅</div>
+        <h4>Resolve comments</h4>
+        <p>Keep discussions tidy and moving forward.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+<div class="section-container">
+  <div class="funko-guide right" id="guideStep4" style="display: none;">
+    <img src="/Tomas_FunkoPop.png" alt="Tomas - Guide" class="funko-avatar"/>
+    <div class="speech-wrapper right-align">
+      <div class="speech-bubble" id="guideSpeechTomas">
+        Hey! I’m Tomas, your backend buddy 🔧<br><br>
+        Let’s explore your progress!
+      </div>
+      <button class="next-btn" (click)="nextGuideStep()">Next →</button>
+    </div>
+  </div>
+  <section class="progress-chart fade-up" id="ProgressCharts">
+    <h2>Weekly Progress</h2>
+    <div class="graph-wrapper">
+
+      <!-- Bar Graph -->
+      <div class="bar-graph">
+        <div class="y-axis">
+          <span>100%</span>
+          <span>75%</span>
+          <span>50%</span>
+          <span>25%</span>
+          <span>0%</span>
+        </div>
+
+        <div class="bar-container">
+          <div class="bar" data-value="80%">
+            <div class="tooltip">Week 1<br>HTML Basics</div>
+          </div>
+          <div class="bar" data-value="60%">
+            <div class="tooltip">Week 2<br>CSS</div>
+          </div>
+          <div class="bar" data-value="90%">
+            <div class="tooltip">Week 3<br>JavaScript</div>
+          </div>
+          <div class="bar" data-value="100%">
+            <div class="tooltip">Week 4<br>Final Project</div>
+          </div>
+          <div class="bar" data-value="75%">
+            <div class="tooltip">Week 5<br>Python</div>
+          </div>
+        </div>
+
+        <div class="x-axis">
+          <span>W1</span>
+          <span>W2</span>
+          <span>W3</span>
+          <span>W4</span>
+          <span>W5</span>
+        </div>
+      </div>
+      <div class="language-pie-wrapper fade-up">
+        <canvas id="languagePieChart" width="220" height="220"></canvas>
+        <div class="legend">
+          <div><span style="background:#f1562f"></span> Python</div>
+          <div><span style="background:#ff8e42"></span> JavaScript</div>
+          <div><span style="background:#ff9a76"></span> C#</div>
+          <div><span style="background:#121212"></span> GoLang</div>
+        </div>
+      </div>
+    </div>
+    <p class="graph-description fade-in">
+      Get deeper insights into your learning journey with EduConnect. From progress tracking to language usage
+      stats, our visual dashboards help you stay on top of your growth — with even more analytics coming your way.
+      <br><a href="#" class="explore-link">Explore Your Dashboard →</a>
+    </p>
+  </section>
+</div>
+
+<div class="section-container">
+  <div class="funko-guide right" id="guideStep5" style="display: none;">
+    <img src="/Levin_FunkoPop.png" alt="Levin - Guide" class="funko-avatar"/>
+    <div class="speech-wrapper right-align">
+      <div class="speech-bubble" id="guideSpeechLevin">
+        `Hey! I’m Levin — I help keep things running smoothly behind the scenes. 🛠️<br><br>Let’s explore your
+        pricing options!`
+      </div>
+      <button class="next-btn" (click)="nextGuideStep()">Next →</button>
+    </div>
+  </div>
+
+  <section class="pricing fade-in" id="Pricing">
+    <h4>🔘 OUR PLANS</h4>
+    <h2>Plans for Your Need</h2>
+    <p>Select the best plan. Contact us for seamless subscription.</p>
+    <div class="billing-toggle">
+      <button>Monthly</button>
+      <button class="outline">Anually</button>
+    </div>
+    <div class="plans">
+      <div class="plan child-fade" style="transition-delay: 0.2s;">
+        <h3>Basic</h3>
+        <p>CHF 0 <span>/ per month</span></p>
+        <ul>
+          <li>🚫 Ads</li>
+          <li>📘 Base Courses</li>
+          <li>💬 Limit on discussion board</li>
+        </ul>
+        <button class="plan-btn">Get Started</button>
+      </div>
+      <div class="plan active child-fade" style="transition-delay: 0.2s;">
+        <h3>Premium</h3>
+        <p>CHF 10 <span>/ per month</span></p>
+        <ul>
+          <li>✅ No Ads</li>
+          <li>🎓 Exclusive Courses</li>
+          <li>🚀 Early Access</li>
+          <li>🧑‍💻 Early Support</li>
+        </ul>
+        <button class="plan-btn">Get Started</button>
+      </div>
+      <div class="plan child-fade child-fade" style="transition-delay: 0.2s;">
+        <h3>Business</h3>
+        <p>CHF 2 <span>/ per month</span></p>
+        <ul>
+          <li>📌 Custom coding tasks</li>
+          <li>📅 School project management</li>
+          <li>🕒 Schedule</li>
+          <li>📣 Communication</li>
+          <li>🧑‍🏫 Custom Courses</li>
+        </ul>
+        <button class="plan-btn">Get Started</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="section-container">
+  <section class="about fade-in" id="About">
+    <h2>About us</h2>
+    <div class="testimonials">
+      <div class="testimonial">
+        <h4>📘 About us</h4>
+        <p>Welcome to EduConnect – where learning programming is inspiring, adaptive and accessible.
+          EduConnect is here to empower your journey.</p>
+        <span>👨‍🎨 Levin Linder – Backend–Developer</span>
+      </div>
+      <div class="testimonial">
+        <h4>🔭 Our Vision</h4>
+        <p>We envision a world where learning to code is a gateway to creativity, problem-solving, and
+          innovation. Our mission is to personalize learning paths.</p>
+        <span>🧠 Moritz Anliker – Backend–Developer</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="section-container">
+  <section class="team fade-in" id="Team">
+    <div class="team-grid">
+      <div class="member">
+        <img src="/Portrait Moritz 2024 Kreis small.png" alt="Moritz Anliker"/>
+        <h3>Moritz Anliker</h3>
+        <p>Backend–Developer</p>
+      </div>
+      <div class="member">
+        <img src="/Levin_Portrait.png" alt="Levin Linder"/>
+        <h3>Levin Linder</h3>
+        <p>Backend–Developer</p>
+      </div>
+      <div class="member">
+        <img src="/TomasGingi.jpg" alt="Tomas Texeira–Alves"/>
+        <h3>Tomas Texeira–Alves</h3>
+        <p>Backend–Developer</p>
+      </div>
+      <div class="member">
+        <img src="/Dan.png" alt="Dan Krummenacher"/>
+        <h3>Dan Krummenacher</h3>
+        <p>Frontend–Developer</p>
+      </div>
+      <div class="member">
+        <img src="/Fynn_Piekarek-3.png" alt="Fynn Piekarek"/>
+        <h3>Fynn Piekarek</h3>
+        <p>Frontend–Developer</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="section-container">
+  <section class="faq fade-in" id="Faq">
+    <h2>Frequently asked questions</h2>
+    <div class="faq-box">
+      <details open>
+        <summary>What is the goal of this platform?</summary>
+        <p>To provide an interactive and supportive environment where users can learn to code
+          effectively.</p>
+      </details>
+      <details>
+        <summary>How do I get started with my first coding lesson?</summary>
+      </details>
+      <details>
+        <summary>Can I code directly on this platform?</summary>
+      </details>
+      <details>
+        <summary>How can I get help if I’m stuck?</summary>
+      </details>
+      <details>
+        <summary>Is this platform suitable for beginners?</summary>
+      </details>
+      <details>
+        <summary>What coding languages are available to learn?</summary>
+      </details>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="footer-left">
+    <h2>Elevate your coding skills with <span>EduConnect.</span></h2>
+    <p>All rights reserved.© 2024 EduConnect</p>
+    <div class="socials">
+      <img src="/youtube-svgrepo-com.svg" style="height: 25px;" alt="">
+      <img src="/facebook-social-logo-svgrepo-com.svg" style="height: 25px;" alt="">
+      <img src="/twitter-social-media-svgrepo-com.svg" style="height: 25px;" alt="">
+    </div>
+  </div>
+
+  <div class="footer-center">
+    <div class="footer-links">
+      <a href="#Features">Features</a>
+      <a href="#Pricing">Pricing</a>
+      <a href="#">Support</a>
+      <a href="#About">About us</a>
+    </div>
+  </div>
+
+  <div class="footer-right">
+    <div class="footer-graphic">
+      <img src="/Screenshot 2025-03-25 104226.png" alt="logo" class="footer-logo"/>
+    </div>
+  </div>
+</footer>
+
+</body>
