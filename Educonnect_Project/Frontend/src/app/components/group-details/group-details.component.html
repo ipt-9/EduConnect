@@ -1,0 +1,31 @@
+<div class="group-details">
+  <h2>👥 {{ group?.name }}</h2>
+  <p><strong>Beschreibung:</strong> {{ group?.description }}</p>
+
+  <div class="invite">
+    Einladungscode: <code>{{ group?.invite_code }}</code>
+  </div>
+
+  <h3>Mitglieder</h3>
+  <div class="members-list">
+    <div *ngFor="let member of members" class="member-card">
+      <img
+        [src]="member.profile_picture_url || 'https://via.placeholder.com/48?text=👤'"
+        alt="Avatar"
+        class="avatar"
+       src=""/>
+
+      <div class="member-info">
+        <h4>{{ member.username }}</h4>
+        <p>{{ member.email }}</p>
+      </div>
+
+      <span class="role-badge">{{ member.role }}</span>
+    </div>
+
+
+  </div>
+  <button [routerLink]="['/groups', groupId, 'chat']" class="chat-button">
+    💬 Zum Gruppenchat
+  </button>
+</div>

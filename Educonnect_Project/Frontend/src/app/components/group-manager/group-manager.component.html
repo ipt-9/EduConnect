@@ -1,0 +1,27 @@
+<div class="group-manager">
+  <h2>👥 Gruppenverwaltung</h2>
+
+  <section class="create">
+    <h3>➕ Gruppe erstellen</h3>
+    <input [(ngModel)]="groupName" placeholder="Gruppenname">
+    <input [(ngModel)]="groupDescription" placeholder="Beschreibung">
+    <button (click)="createGroup()">Erstellen</button>
+  </section>
+
+  <section class="join">
+    <h3>🔑 Gruppe beitreten</h3>
+    <input [(ngModel)]="joinCode" placeholder="Einladungscode z.B. AXAPFN6H">
+    <button (click)="joinGroup()">Beitreten</button>
+  </section>
+
+  <section class="list">
+    <h3>📋 Meine Gruppen</h3>
+    <div *ngFor="let group of groups" class="group-card">
+      <div class="info">
+        <h4>{{group.name}}</h4>
+        <p>{{group.description}}</p>
+      </div>
+      <button [routerLink]="['/groups', group.id]">Gruppe Übersicht</button>
+    </div>
+  </section>
+</div>

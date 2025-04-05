@@ -1,6 +1,17 @@
 <div class="course-header">
-  <h1>Course</h1>
-  <h2>discover <strong>free</strong> courses from <span class="highlight">EduConnect</span></h2>
+  <div>
+    <h1>Course</h1>
+    <h2>
+      discover <strong>free</strong> courses from
+      <span class="highlight">EduConnect</span>
+    </h2>
+  </div>
+
+  <!-- 🧠 Neu: Gruppen verwalten Button oben rechts -->
+  <a class="group-manage-link" [routerLink]="['/groupmanager']">
+    <span class="icon">📁</span>
+    <span>Gruppen verwalten</span>
+  </a>
 </div>
 
 <!-- Filterleiste -->
@@ -22,26 +33,31 @@
 
 <!-- Kursübersicht -->
 <div class="course-grid">
-  <div class="course-card" *ngFor="let course of courses" (click)="openCourse(course.id)">
-    <h3>{{ course.programming_language }} {{ course.title || 'Getting Started' }}</h3>
+  <div
+    class="course-card"
+    *ngFor="let course of courses"
+    (click)="openCourse(course.id)"
+  >
+    <h3>
+      {{ course.programming_language }} {{ course.title || 'Getting Started' }}
+    </h3>
     <p>{{ course.description }}</p>
 
-    <!-- Fortschritt -->
     <div class="status">
       <span *ngIf="course.completed" class="completed">Completed</span>
       <span *ngIf="!course.started" class="not-started">Not Started</span>
-      <span *ngIf="!course.completed && course.started" class="in-progress">In Progress</span>
+      <span *ngIf="!course.completed && course.started" class="in-progress">
+        In Progress
+      </span>
     </div>
 
-
-    <!-- Icons / Infozeile -->
     <div class="meta-line">
       <span class="tag">✔ {{ course.difficulty || 'Easy' }}</span>
       <span class="tag">💯 {{ course.programming_language }}</span>
       <span class="tag">⏳ {{ course.duration || '2 Weeks' }}</span>
     </div>
 
-    <!-- Button -->
     <button class="continue-btn">Continue</button>
   </div>
 </div>
+

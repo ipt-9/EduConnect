@@ -9,6 +9,10 @@ import {CourseListComponent} from './components/course-list/course-list.componen
 import {TasksListComponent} from './components/tasks-list/tasks-list.component';
 import {AuthGuard} from './auth.guard';
 import {SidebarComponent} from './components/sidebar/sidebar.component';
+import {GroupManagerComponent} from './components/group-manager/group-manager.component';
+import {GroupChatComponent} from './components/groupchat/groupchat.component';
+import {GroupDetailsComponent} from './components/group-details/group-details.component';
+
 
 export const routes: Routes = [
   { path: '', component: HomepageComponent },
@@ -17,7 +21,13 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'contact', component: ContactComponent, canActivate: [AuthGuard] },
   { path: 'errorpage', component: ErrorpageComponent, canActivate: [AuthGuard] },
-    { path: 'courselist', component: CourseListComponent, canActivate: [AuthGuard] },
-    { path: 'taskslist', component: TasksListComponent, canActivate: [AuthGuard] },
+  { path: 'courselist', component: CourseListComponent, canActivate: [AuthGuard] },
+  { path: 'taskslist', component: TasksListComponent, canActivate: [AuthGuard] },
   { path: 'sidebar', component: SidebarComponent },
+  { path: 'groupmanager',component: GroupManagerComponent, canActivate: [AuthGuard] },
+  { path: 'groups/:id/chat',component: GroupChatComponent, canActivate: [AuthGuard] },
+  { path: 'groups/:id', component: GroupDetailsComponent, canActivate: [AuthGuard] },
+
+
+
 ];

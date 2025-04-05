@@ -1,8 +1,9 @@
 .course-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
   padding: 1rem 2rem;
+  flex-wrap: wrap;
 
   h1 {
     font-size: 2rem;
@@ -12,6 +13,7 @@
   h2 {
     font-weight: normal;
     font-size: 1rem;
+    margin-top: 0.25rem;
 
     .highlight {
       color: #ff5722;
@@ -20,6 +22,37 @@
 
     strong {
       color: black;
+    }
+  }
+
+  // Apple-inspirierter Gruppen-Link
+  .group-manage-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 152, 0, 0.9);
+    color: white;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+    border-radius: 12px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.25s ease;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    .icon {
+      font-size: 1.2rem;
+    }
+
+    &:hover {
+      background: rgba(255, 138, 0, 0.95);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: scale(0.98);
     }
   }
 }
@@ -100,7 +133,8 @@
       font-size: 0.75rem;
     }
 
-    .not-started, .in-progress {
+    .not-started,
+    .in-progress {
       font-size: 0.8rem;
       color: #aaa;
     }

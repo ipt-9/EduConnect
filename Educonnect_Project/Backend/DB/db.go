@@ -489,3 +489,8 @@ func GetSubmittedOrAttemptedCode(userID, taskID uint64) (string, error) {
 
 	return code, err
 }
+func GetUsernameByUserID(userID uint64) (string, error) {
+	var username string
+	err := DB.QueryRow(`SELECT username FROM users WHERE id = ?`, userID).Scan(&username)
+	return username, err
+}
