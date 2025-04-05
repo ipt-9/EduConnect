@@ -232,14 +232,22 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expirationTime := time.Now().Add(15 * time.Minute)
-	claims := &Claims{
-		Email: data.Email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-		},
+	// 🔄 Username laden
+	username, err := DB.GetUsernameByUserID(userID)
+	if err != nil {
+		http.Error(w, "Username konnte nicht geladen werden", http.StatusInternalServerError)
+		return
 	}
-	log.Printf("🧾 JWT Claims: email=%s, exp=%v\n", claims.Email, claims.ExpiresAt)
+
+	expirationTime := time.Now().Add(45 * time.Minute)
+
+	claims := jwt.MapClaims{
+		"user_id":  userID,
+		"email":    data.Email,
+		"username": username, // 👈 Hier wird's wichtig!
+		"exp":      expirationTime.Unix(),
+		"iat":      time.Now().Unix(),
+	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)

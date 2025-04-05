@@ -1,0 +1,20 @@
+<div class="chat-wrapper">
+  <div class="messages" #scrollContainer>
+    <div
+      *ngFor="let msg of messages"
+      [ngClass]="{ 'own': isOwnMessage(msg), 'other': !isOwnMessage(msg) }"
+      class="bubble"
+    >
+      <div class="meta">
+        <span class="username">{{ msg.user.username }}</span>
+        <span class="time">• {{ msg.created_at | date: 'shortTime' }}</span>
+      </div>
+      <div class="text">{{ msg.message }}</div>
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <input [(ngModel)]="messageText" placeholder="Nachricht schreiben..." (keyup.enter)="sendMessage()" />
+    <button (click)="sendMessage()">➤</button>
+  </div>
+</div>

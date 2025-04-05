@@ -1,0 +1,61 @@
+.group-manager {
+  font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, sans-serif;
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  color: #333;
+
+  h2, h3 {
+    color: #ff6f00;
+  }
+
+  input {
+    display: block;
+    width: 100%;
+    padding: 0.6rem;
+    margin: 0.5rem 0;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-size: 1rem;
+  }
+
+  button {
+    background: #ff6f00;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: #ff8f00;
+    }
+  }
+
+  .group-card {
+    background: #f9f9f9;
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h4 {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0.25rem 0 0;
+      font-size: 0.9rem;
+      color: #666;
+    }
+  }
+}
