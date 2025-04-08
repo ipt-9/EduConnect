@@ -2,8 +2,10 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/ipt-9/EduConnect/DB"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -111,6 +113,7 @@ func GetTasksByCourse(w http.ResponseWriter, r *http.Request) {
 func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 
+	// Preflight
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -120,6 +123,7 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 🔐 Bearer Token prüfen
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		http.Error(w, "Authorization Header fehlt", http.StatusUnauthorized)
@@ -136,19 +140,21 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 🧠 User ID laden
 	userID, err := DB.GetUserIDByEmail(claims.Email)
 	if err != nil {
 		http.Error(w, "Benutzer nicht gefunden", http.StatusInternalServerError)
 		return
 	}
 
+	// 🧾 Body parsen
 	var input DB.SubmissionInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		http.Error(w, "Ungültiges JSON", http.StatusBadRequest)
 		return
 	}
 
-	// ✅ Absicherung: Code darf nicht leer sein
+	// ✅ Code darf nicht leer sein
 	if strings.TrimSpace(input.Code) == "" {
 		http.Error(w, "Code darf nicht leer sein", http.StatusBadRequest)
 		return
@@ -156,6 +162,7 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 
 	input.UserID = userID
 
+	// 💾 Lösung speichern + Fortschritt aktualisieren
 	subID, err := DB.SaveSubmissionAndUpdateProgress(input)
 	if err != nil {
 		http.Error(w, "Fehler beim Speichern der Lösung", http.StatusInternalServerError)
@@ -164,6 +171,42 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 
 	success := subID != 0
 
+	// ✅ Benachrichtigung nur bei Erfolg
+	if success {
+		log.Println("✅ Aufgabe erfolgreich abgeschlossen – starte Notification-Logik")
+
+		// Titel der Aufgabe laden
+		taskTitle, err := DB.GetTaskTitleByID(DB.DB, input.TaskID)
+		if err != nil {
+			log.Println("⚠️ Konnte Aufgabentitel nicht laden:", err)
+			taskTitle = "Unbekannte Aufgabe"
+		}
+
+		// Username laden
+		username, err := DB.GetUsernameByID(DB.DB, userID)
+		if err != nil {
+			log.Println("⚠️ Konnte Username nicht laden:", err)
+			username = "Ein Mitglied"
+		}
+
+		// Gruppen-IDs laden
+		groupIDs, err := DB.GetGroupIDsForUser(DB.DB, userID)
+		if err != nil {
+			log.Println("⚠️ Konnte Gruppen nicht laden:", err)
+		} else {
+			for _, gid := range groupIDs {
+				msg := fmt.Sprintf("✅ %s hat die Aufgabe „%s“ abgeschlossen.", username, taskTitle)
+				err := DB.CreateGroupNotification(DB.DB, gid, &userID, "TASK_COMPLETED", msg)
+				if err != nil {
+					log.Println("❌ Fehler beim Speichern der Notification:", err)
+				} else {
+					log.Printf("🔔 Notification gespeichert für Gruppe %d\n", gid)
+				}
+			}
+		}
+	}
+
+	// 🔁 Antwort senden
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"submission_id": subID,

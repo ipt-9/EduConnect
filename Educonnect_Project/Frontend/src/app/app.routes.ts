@@ -12,7 +12,7 @@ import {SidebarComponent} from './components/sidebar/sidebar.component';
 import {GroupManagerComponent} from './components/group-manager/group-manager.component';
 import {GroupChatComponent} from './components/groupchat/groupchat.component';
 import {GroupDetailsComponent} from './components/group-details/group-details.component';
-
+import { GroupRoleManagerComponent } from './components/group-role-manager/group-role-manager.component';
 
 export const routes: Routes = [
   { path: '', component: HomepageComponent },
@@ -27,7 +27,5 @@ export const routes: Routes = [
   { path: 'groupmanager',component: GroupManagerComponent, canActivate: [AuthGuard] },
   { path: 'groups/:id/chat',component: GroupChatComponent, canActivate: [AuthGuard] },
   { path: 'groups/:id', component: GroupDetailsComponent, canActivate: [AuthGuard] },
-
-
-
+  { path: 'groups/:id/manage-roles', component: GroupRoleManagerComponent },
 ];

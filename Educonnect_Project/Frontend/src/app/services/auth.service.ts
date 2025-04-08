@@ -41,10 +41,20 @@ export class AuthService {
   startTokenWatcher(intervalMs = 5000) {
     this.checkInterval = setInterval(() => {
       if (this.isTokenExpired()) {
-        this.logout();
+        const publicRoutes = ['/', '/login', '/register'];
+
+        // Nur logout, wenn man NICHT auf einer öffentlichen Seite ist
+        if (!publicRoutes.includes(this.router.url)) {
+          this.logout();
+        } else {
+          // 🔕 Kein Redirect, nur Token entfernen
+          console.warn('⏳ Token abgelaufen, aber auf öffentlicher Route → kein Redirect');
+          localStorage.removeItem('token');
+        }
       }
     }, intervalMs);
   }
+
 
   stopTokenWatcher() {
     clearInterval(this.checkInterval);

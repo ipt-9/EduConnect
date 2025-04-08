@@ -13,19 +13,41 @@
         [src]="member.profile_picture_url || 'https://via.placeholder.com/48?text=👤'"
         alt="Avatar"
         class="avatar"
-       src=""/>
+      />
 
       <div class="member-info">
         <h4>{{ member.username }}</h4>
         <p>{{ member.email }}</p>
       </div>
 
-      <span class="role-badge">{{ member.role }}</span>
+      <span *ngIf="member.role === 'admin'" class="role-badge">admin</span>
     </div>
-
-
   </div>
+
   <button [routerLink]="['/groups', groupId, 'chat']" class="chat-button">
     💬 Zum Gruppenchat
   </button>
+
+  <button class="leave-button" (click)="leaveGroup()">
+    🚪 Gruppe verlassen
+  </button>
+
+  <a
+    *ngIf="isCurrentUserAdmin"
+    [routerLink]="['/groups', groupId, 'manage-roles']"
+    class="admin-link"
+  >
+    🛠️ Rollen verwalten
+  </a>
+
+  <h3>📬 Letzte Aktivitäten</h3>
+  <div class="notification-list">
+    <div *ngFor="let notif of notifications" class="notification-card">
+      <div class="notif-icon">✅</div>
+      <div class="notif-content">
+        <div class="notif-message">{{ notif.message }}</div>
+        <div class="notif-time">{{ notif.created_at | date:'short' }}</div>
+      </div>
+    </div>
+  </div>
 </div>

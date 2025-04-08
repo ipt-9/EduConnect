@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
     // 🧠 Ablaufzeit prüfen (JWT Payload)
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      const now = Math.floor(Date.now() / 1000); // aktuelle Zeit in Sekunden
+      const now = Math.floor(Date.now() / 1000000); // aktuelle Zeit in Sekunden
 
       if (payload.exp && payload.exp < now) {
         console.warn('⏳ Token ist abgelaufen!');

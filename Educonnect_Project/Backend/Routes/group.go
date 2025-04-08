@@ -88,7 +88,6 @@ func JoinGroupByCodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 🔐 Token prüfen
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		http.Error(w, "Authorization Header fehlt oder ist ungültig", http.StatusUnauthorized)
@@ -105,23 +104,28 @@ func JoinGroupByCodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 🔎 Einladungscode aus Query
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		http.Error(w, "Einladungscode fehlt", http.StatusBadRequest)
 		return
 	}
 
-	// 📥 DB-Logik ausführen
 	err = DB.JoinGroupByCode(DB.DB, code, claims.UserID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Beitritt fehlgeschlagen: %v", err), http.StatusBadRequest)
 		return
 	}
 
+	// 🔔 Notification hinzufügen
+	groupID, _ := DB.GetGroupIDByInviteCode(DB.DB, code)
+	username, _ := DB.GetUsernameByID(DB.DB, claims.UserID)
+	msg := fmt.Sprintf("👥 %s ist der Gruppe beigetreten.", username)
+	_ = DB.CreateGroupNotification(DB.DB, int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("🎉 Du bist der Gruppe erfolgreich beigetreten!"))
 }
+
 func GetGroupMembersHandler(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 	if r.Method == http.MethodOptions {
@@ -178,7 +182,6 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 🔐 Auth
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		http.Error(w, "Authorization Header fehlt", http.StatusUnauthorized)
@@ -190,11 +193,10 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 		return jwtKey, nil
 	})
 	if err != nil || !token.Valid {
-		http.Error(w, "Ungültiger oder abgelaufener Token", http.StatusUnauthorized)
+		http.Error(w, "Ungültiges oder abgelaufenes Token", http.StatusUnauthorized)
 		return
 	}
 
-	// 🔎 ID aus Pfad extrahieren
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {
 		http.Error(w, "Ungültiger Pfad", http.StatusBadRequest)
@@ -212,16 +214,54 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 🚫 Entfernen
+	log.Printf("🔍 claims.UserID: %d, targetUserID: %d, groupID: %d", claims.UserID, targetUserID, groupID)
+
+	// Nur wenn sich jemand selbst entfernen will und admin ist
+	if claims.UserID == targetUserID {
+		isAdmin, err := DB.IsUserAdminInGroup(DB.DB, groupID, targetUserID)
+		if err != nil {
+			log.Printf("❌ Fehler bei IsUserAdminInGroup: %v", err)
+			http.Error(w, "Fehler beim Admin-Check: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		log.Printf("👤 User %d ist Admin in Gruppe %d: %v", targetUserID, groupID, isAdmin)
+
+		if isAdmin {
+			adminCount, err := DB.CountAdminsInGroup(DB.DB, groupID)
+			if err != nil {
+				log.Printf("❌ Fehler bei CountAdminsInGroup: %v", err)
+				http.Error(w, "Fehler beim Zählen der Admins: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			log.Printf("👑 Adminanzahl in Gruppe %d: %d", groupID, adminCount)
+
+			if adminCount <= 1 {
+				log.Printf("⛔ Letzter Admin (%d) darf sich nicht selbst entfernen", targetUserID)
+				http.Error(w, "Fehler beim Entfernen: Admins können sich nicht selbst entfernen", http.StatusForbidden)
+				return
+			}
+		}
+	}
+
 	err = DB.RemoveGroupMember(DB.DB, groupID, targetUserID, claims.UserID)
 	if err != nil {
+		log.Printf("❌ Fehler bei RemoveGroupMember: %v", err)
 		http.Error(w, fmt.Sprintf("Fehler beim Entfernen: %v", err), http.StatusForbidden)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("✅ Mitglied erfolgreich entfernt"))
+	username, _ := DB.GetUsernameByID(DB.DB, uint64(targetUserID))
+	msg := fmt.Sprintf("🚪 %s hat die Gruppe verlassen.", username)
+	_ = DB.CreateGroupNotification(DB.DB, int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
+
+	log.Printf("✅ %s (ID %d) wurde erfolgreich aus Gruppe %d entfernt", username, targetUserID, groupID)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "✅ Mitglied erfolgreich entfernt",
+	})
 }
+
 func UpdateMemberRoleHandler(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 	if r.Method == http.MethodOptions {
@@ -233,7 +273,6 @@ func UpdateMemberRoleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 🔐 Auth
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		http.Error(w, "Authorization Header fehlt", http.StatusUnauthorized)
@@ -249,7 +288,6 @@ func UpdateMemberRoleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 🔢 IDs aus Pfad
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 6 {
 		http.Error(w, "Ungültiger Pfad", http.StatusBadRequest)
@@ -266,7 +304,6 @@ func UpdateMemberRoleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 📦 Rolle aus JSON
 	type roleRequest struct {
 		Role string `json:"role"`
 	}
@@ -275,23 +312,30 @@ func UpdateMemberRoleHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ungültiger Body", http.StatusBadRequest)
 		return
 	}
-
-	// ✅ Rolle validieren
 	if req.Role != "admin" && req.Role != "member" {
 		http.Error(w, "Ungültige Rolle. Erlaubt: admin, member", http.StatusBadRequest)
 		return
 	}
 
-	// 🚀 DB-Update ausführen
 	err = DB.UpdateMemberRole(DB.DB, groupID, targetUserID, claims.UserID, req.Role)
 	if err != nil {
 		http.Error(w, "Fehler beim Aktualisieren der Rolle: "+err.Error(), http.StatusForbidden)
 		return
 	}
 
+	// 🔔 Notification hinzufügen
+	username, _ := DB.GetUsernameByID(DB.DB, targetUserID)
+	msg := fmt.Sprintf("🔒 %s wurde zum Gruppen-%s gemacht.", username, req.Role)
+	_ = DB.CreateGroupNotification(DB.DB, int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("✅ Rolle erfolgreich aktualisiert"))
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "✅ Rolle erfolgreich aktualisiert",
+	})
+
 }
+
 func GetUserGroupsHandler(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 
@@ -353,7 +397,6 @@ func GetGroupByIDHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Authorization Header fehlt", http.StatusUnauthorized)
 		return
 	}
-
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 	claims := &groupClaims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
@@ -363,7 +406,6 @@ func GetGroupByIDHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Token ungültig", http.StatusUnauthorized)
 		return
 	}
-
 	// 📦 Datenbank aufrufen
 	group, err := DB.GetGroupByID(DB.DB, groupID)
 	if err != nil {
@@ -374,3 +416,5 @@ func GetGroupByIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(group)
 }
+
+// levin & tomas were here

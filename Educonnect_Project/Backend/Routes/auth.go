@@ -25,7 +25,8 @@ type Credentials struct {
 }
 
 type Claims struct {
-	Email string `json:"email"`
+	Email  string `json:"email"`
+	UserID uint64 `json:"user_id"`
 	jwt.RegisteredClaims
 }
 

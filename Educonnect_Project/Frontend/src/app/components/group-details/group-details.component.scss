@@ -109,3 +109,78 @@ p {
   background: #fb8c00;
   transform: scale(1.02);
 }
+.notification-list {
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notification-card {
+  display: flex;
+  align-items: center;
+  background: #e8f5e9;
+  border-left: 5px solid #66bb6a;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.notif-icon {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+  color: #388e3c;
+}
+
+.notif-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.notif-message {
+  font-weight: 500;
+  color: #2e7d32;
+}
+
+.notif-time {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.leave-button {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background-color: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(229, 57, 53, 0.25);
+}
+
+.leave-button:hover {
+  background-color: #c62828;
+  transform: scale(1.03);
+  box-shadow: 0 6px 16px rgba(229, 57, 53, 0.35);
+}
+.admin-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  font-weight: 600;
+  color: #1976d2;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+
+.admin-link:hover {
+  text-decoration: underline;
+  color: #1565c0;
+}

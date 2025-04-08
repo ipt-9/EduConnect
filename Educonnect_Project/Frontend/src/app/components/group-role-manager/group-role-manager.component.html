@@ -1,0 +1,17 @@
+<h2>🔐 Rollenverwaltung</h2>
+
+<div *ngFor="let member of members" class="role-card">
+  <div class="info" [ngClass]="{ 'me': member.user_id === currentUserId }">
+    <strong>{{ member.username }}</strong>
+    <span class="role">({{ member.role }})</span>
+  </div>
+
+  <div class="actions" *ngIf="member.user_id !== currentUserId">
+    <button *ngIf="member.role === 'member'" (click)="changeRole(member, 'admin')">
+      ➡️ Zum Admin
+    </button>
+    <button *ngIf="member.role === 'admin'" (click)="changeRole(member, 'member')">
+      ⬅️ Zum Member
+    </button>
+  </div>
+</div>
