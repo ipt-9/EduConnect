@@ -271,3 +271,29 @@ func GetUserByID(db *sql.DB, userID uint64) (User, error) {
 	`, userID).Scan(&user.ID, &user.Username, &user.Email, &user.ProfilePictureUrl)
 	return user, err
 }
+func GetGroupIDByInviteCode(db *sql.DB, code string) (uint64, error) {
+	var groupID uint64
+	err := db.QueryRow(`
+		SELECT id FROM user_groups
+		WHERE invite_code = ?
+	`, code).Scan(&groupID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return groupID, nil
+}
+func CountAdminsInGroup(db *sql.DB, groupID uint64) (int, error) {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM group_members WHERE group_id = ? AND role = 'admin'", groupID).Scan(&count)
+	return count, err
+}
+func IsUserAdminInGroup(db *sql.DB, groupID uint64, userID uint64) (bool, error) {
+	var role string
+	err := db.QueryRow("SELECT role FROM group_members WHERE group_id = ? AND user_id = ?", groupID, userID).Scan(&role)
+	if err != nil {
+		return false, err
+	}
+	return role == "admin", nil
+}
