@@ -43,6 +43,7 @@ func main() {
 	r.HandleFunc("/groups/{groupID}/members/{userID}/role", routes.UpdateMemberRoleHandler).Methods("PUT", "OPTIONS")
 	r.HandleFunc("/groups/{id}", routes.GetGroupByIDHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/groups/{groupID}/notifications", routes.GetGroupNotificationsHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/groups/{id}/share-submission", routes.ShareSubmissionHandler).Methods("POST", "OPTIONS")
 
 	r.HandleFunc("/groups/{groupID}/messages", routes.GetGroupMessagesHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/ws/groups/{groupID}/chat", routes.HandleGroupChatWS)

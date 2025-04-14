@@ -96,7 +96,7 @@ export class GroupDetailsComponent implements OnInit {
     }).subscribe({
       next: () => {
         alert("✅ Du hast die Gruppe erfolgreich verlassen.");
-        this.router.navigate(['/']);
+        this.router.navigate(['/groupmanager']);
       },
       error: err => {
         if (err.status === 403 && err.error?.includes("Admins können sich nicht selbst entfernen")) {
@@ -108,4 +108,18 @@ export class GroupDetailsComponent implements OnInit {
       }
     });
   }
+  getNotificationClass(message: string): string {
+    if (message.includes('hat die Aufgabe')) {
+      return 'notif-success';
+    } else if (message.includes('Gruppe verlassen')) {
+      return 'notif-danger';
+    } else if (message.includes('Gruppe beigetreten')) {
+      return 'notif-success';
+    } else if (message.includes('zum Gruppen-')) {
+      return 'notif-warning';
+    } else {
+      return 'notif-default';
+    }
+  }
+
 }

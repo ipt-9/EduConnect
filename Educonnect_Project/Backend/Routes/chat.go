@@ -2,7 +2,9 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
@@ -14,10 +16,11 @@ import (
 	"github.com/ipt-9/EduConnect/DB"
 )
 
-type ChatMessage struct {
-	Message   string    `json:"message"`
-	CreatedAt time.Time `json:"created_at"`
-	User      struct {
+type GroupChatMessage struct {
+	Message     string    `json:"message"`
+	MessageType string    `json:"message_type"` // ✅ HIER hinzufügen
+	CreatedAt   time.Time `json:"created_at"`
+	User        struct {
 		ID                uint64  `json:"id"`
 		Username          string  `json:"username"`
 		Email             string  `json:"email"`
@@ -37,7 +40,6 @@ var groupClientsMutex sync.Mutex
 func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 
-	// 1. Gruppe-ID aus URL holen
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 4 {
 		http.Error(w, "Ungültiger Pfad", http.StatusBadRequest)
@@ -49,14 +51,12 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Token aus Query holen und prüfen
 	tokenStr := r.URL.Query().Get("token")
 	if tokenStr == "" {
 		http.Error(w, "Token fehlt", http.StatusUnauthorized)
 		return
 	}
-
-	claims := &groupClaims{}
+	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
@@ -64,20 +64,16 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ungültiges oder abgelaufenes Token", http.StatusUnauthorized)
 		return
 	}
-
 	userID := claims.UserID
 
-	// 3. Verbindung upgraden
 	conn, err := upgrade.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("❌ Upgrade fehlgeschlagen:", err)
+		log.Println("❌ WebSocket Upgrade fehlgeschlagen:", err)
 		return
 	}
 	defer conn.Close()
-
 	log.Printf("🔌 WS verbunden: User %d in Gruppe %d", userID, groupID)
 
-	// 4. WebSocket Client speichern
 	groupClientsMutex.Lock()
 	if groupClients[groupID] == nil {
 		groupClients[groupID] = make(map[*websocket.Conn]bool)
@@ -85,8 +81,7 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 	groupClients[groupID][conn] = true
 	groupClientsMutex.Unlock()
 
-	// 5. Alle bisherigen Nachrichten an den neuen Client schicken
-	pastMessages, err := DB.GetFullGroupMessages(DB.DB, groupID, 1000000)
+	pastMessages, err := DB.GetFullGroupMessages(DB.DB, groupID, 1000)
 	if err != nil {
 		log.Printf("❌ Fehler beim Laden alter Nachrichten: %v", err)
 	} else {
@@ -97,7 +92,6 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// 6. Nachrichtenschleife
 	for {
 		_, rawMsg, err := conn.ReadMessage()
 		if err != nil {
@@ -107,29 +101,34 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 
 		var incoming struct {
 			Message string `json:"message"`
+			Type    string `json:"type"`
 		}
 		if err := json.Unmarshal(rawMsg, &incoming); err != nil || strings.TrimSpace(incoming.Message) == "" {
-			log.Println("⚠️ Leere oder ungültige Nachricht empfangen")
+			log.Println("⚠️ Ungültige oder leere Nachricht empfangen")
 			continue
 		}
 
-		// Nachricht in DB speichern
-		if err := DB.SaveGroupMessage(DB.DB, groupID, userID, incoming.Message); err != nil {
+		msgType := incoming.Type
+		if msgType == "" {
+			msgType = "text"
+		}
+
+		err = DB.SaveGroupMessage(DB.DB, groupID, userID, incoming.Message, msgType)
+		if err != nil {
 			log.Printf("❌ Nachricht konnte nicht gespeichert werden: %v", err)
 			continue
 		}
 
-		// Benutzer laden (für Broadcast)
 		user, err := DB.GetUserByID(DB.DB, userID)
-
 		if err != nil {
-			log.Printf("❌ Benutzer nicht gefunden: %v", err)
+			log.Printf("❌ Benutzer konnte nicht geladen werden: %v", err)
 			continue
 		}
 
 		msg := DB.GroupChatMessage{
-			Message:   incoming.Message,
-			CreatedAt: time.Now(),
+			Message:     incoming.Message,
+			MessageType: msgType,
+			CreatedAt:   time.Now(),
 			User: struct {
 				ID                uint64  `json:"id"`
 				Username          string  `json:"username"`
@@ -143,7 +142,6 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 
-		// Broadcast an alle
 		groupClientsMutex.Lock()
 		for client := range groupClients[groupID] {
 			if err := client.WriteJSON(msg); err != nil {
@@ -155,11 +153,9 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 		groupClientsMutex.Unlock()
 	}
 
-	// 7. Verbindung aufräumen
 	groupClientsMutex.Lock()
 	delete(groupClients[groupID], conn)
 	groupClientsMutex.Unlock()
-
 	log.Printf("❎ WS getrennt: User %d aus Gruppe %d", userID, groupID)
 }
 
@@ -200,4 +196,99 @@ func GetGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(messages)
+}
+
+func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+	log.Println("📥 Neue Anfrage auf /groups/{id}/share-submission")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Ungültige Methode", http.StatusMethodNotAllowed)
+		log.Println("⛔ Methode nicht erlaubt:", r.Method)
+		return
+	}
+
+	// 🔐 JWT prüfen
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		http.Error(w, "Authorization Header fehlt", http.StatusUnauthorized)
+		log.Println("⛔ Kein oder ungültiger Authorization Header")
+		return
+	}
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "Ungültiges oder abgelaufenes Token", http.StatusUnauthorized)
+		log.Println("⛔ Token ungültig:", err)
+		return
+	}
+	log.Printf("🔐 Authentifizierter User: %s (ID %d)", claims.Email, claims.UserID)
+
+	// 🔢 Gruppen-ID aus Pfad
+	vars := mux.Vars(r)
+	log.Println("🌐 Mux Vars:", vars)
+
+	groupIDStr := vars["id"]
+	log.Println("➡️ Gruppen-ID aus URL:", groupIDStr)
+
+	groupID, err := strconv.Atoi(groupIDStr)
+	if err != nil {
+		http.Error(w, "Ungültige Gruppen-ID", http.StatusBadRequest)
+		log.Println("⛔ Fehler beim Parsen der Gruppen-ID:", err)
+		return
+	}
+
+	// 📥 JSON-Body einlesen
+	var req struct {
+		TaskID int `json:"task_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Ungültiges JSON", http.StatusBadRequest)
+		log.Println("⛔ Fehler beim Parsen des JSON:", err)
+		return
+	}
+	log.Println("📦 Aufgabe ID:", req.TaskID)
+
+	// ✅ Submission, Task-Titel, Username laden
+	sub, err := DB.GetSubmissionByTaskAndUser(DB.DB, uint64(req.TaskID), claims.UserID)
+	if err != nil {
+		http.Error(w, "Keine gültige Lösung gefunden", http.StatusNotFound)
+		log.Println("⛔ Keine gültige Submission:", err)
+		return
+	}
+	title, _ := DB.GetTaskTitleByID(DB.DB, uint64(req.TaskID))
+	username, _ := DB.GetUsernameByID(DB.DB, claims.UserID)
+
+	log.Println("✅ Submission geladen von", username, "| Aufgabe:", title)
+
+	// 💬 Nachricht formatieren
+	msg := fmt.Sprintf(
+		"✅ %s hat die Aufgabe „%s“ gelöst:\n```python\n%s\n```\n🕒 %dms\n📤 %s",
+		username, title, sub.Code, sub.ExecutionTime, sub.Output,
+	)
+
+	// 💾 Nachricht speichern
+	err = DB.SaveGroupMessage(DB.DB, uint64(groupID), claims.UserID, msg, "submission")
+	if err != nil {
+		http.Error(w, "Nachricht konnte nicht gespeichert werden", http.StatusInternalServerError)
+		log.Println("⛔ Fehler beim Speichern der Nachricht:", err)
+		return
+	}
+
+	log.Println("✅ Nachricht erfolgreich gespeichert")
+
+	// ✅ Erfolgreiche JSON-Antwort
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":         "success",
+		"message":        "Aufgabe erfolgreich geteilt",
+		"shared_message": msg,
+	})
 }
