@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/ipt-9/EduConnect/utils"
+	"log"
 	"time"
 )
 
@@ -131,12 +132,7 @@ func RemoveGroupMember(db *sql.DB, groupID, targetUserID, requesterID uint64) er
 		return fmt.Errorf("Nur Admins dürfen Mitglieder entfernen")
 	}
 
-	// 2. Selbstschutz: Admin darf sich nicht selbst entfernen
-	if requesterID == targetUserID {
-		return fmt.Errorf("Admins können sich nicht selbst entfernen")
-	}
-
-	// 3. Entfernen
+	// 2. Entfernen
 	_, err = db.Exec(`
 		DELETE FROM group_members 
 		WHERE group_id = ? AND user_id = ?`,
@@ -144,6 +140,7 @@ func RemoveGroupMember(db *sql.DB, groupID, targetUserID, requesterID uint64) er
 
 	return err
 }
+
 func UpdateMemberRole(db *sql.DB, groupID, targetUserID, requesterID uint64, newRole string) error {
 	// 1. Rolle vom Requester prüfen
 	var requesterRole string
@@ -175,11 +172,17 @@ func UpdateMemberRole(db *sql.DB, groupID, targetUserID, requesterID uint64, new
 
 	return err
 }
-func SaveGroupMessage(db *sql.DB, groupID, userID uint64, message string) error {
+func SaveGroupMessage(db *sql.DB, groupID, userID uint64, message string, messageType string) error {
+	log.Printf("💾 INSERT group_message | Group: %d | User: %d | Type: %s", groupID, userID, messageType)
+
 	_, err := db.Exec(`
-		INSERT INTO group_messages (group_id, user_id, message)
-		VALUES (?, ?, ?)`,
-		groupID, userID, message)
+		INSERT INTO group_messages (group_id, user_id, message, message_type, created_at)
+		VALUES (?, ?, ?, ?, NOW())
+	`, groupID, userID, message, messageType)
+
+	if err != nil {
+		log.Println("❌ Insert fehlgeschlagen:", err)
+	}
 	return err
 }
 
@@ -192,6 +195,7 @@ type GroupChatMessage struct {
 		Email             string  `json:"email"`
 		ProfilePictureUrl *string `json:"profile_picture_url"`
 	} `json:"user"`
+	MessageType string
 }
 
 func GetFullGroupMessages(db *sql.DB, groupID uint64, limit int) ([]GroupChatMessage, error) {
@@ -296,4 +300,33 @@ func IsUserAdminInGroup(db *sql.DB, groupID uint64, userID uint64) (bool, error)
 		return false, err
 	}
 	return role == "admin", nil
+}
+func SelfLeaveGroup(db *sql.DB, groupID, userID uint64) error {
+	_, err := db.Exec(`
+		DELETE FROM group_members 
+		WHERE group_id = ? AND user_id = ?`,
+		groupID, userID)
+	return err
+}
+
+type Submission struct {
+	Code          string
+	Output        string
+	ExecutionTime int
+}
+
+func GetSubmissionByTaskAndUser(db *sql.DB, taskID uint64, userID uint64) (*Submission, error) {
+	var sub Submission
+	err := db.QueryRow(`
+	SELECT code, output, execution_time_ms
+	FROM submissions
+	WHERE task_id = ? AND user_id = ? AND is_successful = 1
+	ORDER BY submitted_at DESC
+	LIMIT 1
+`, taskID, userID).Scan(&sub.Code, &sub.Output, &sub.ExecutionTime)
+
+	if err != nil {
+		return nil, err
+	}
+	return &sub, nil
 }

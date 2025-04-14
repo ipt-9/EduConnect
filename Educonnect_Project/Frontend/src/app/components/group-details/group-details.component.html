@@ -42,12 +42,12 @@
 
   <h3>📬 Letzte Aktivitäten</h3>
   <div class="notification-list">
-    <div *ngFor="let notif of notifications" class="notification-card">
+    <div *ngFor="let notif of notifications" class="notification-card" [ngClass]="getNotificationClass(notif.message)">
       <div class="notif-icon">✅</div>
       <div class="notif-content">
         <div class="notif-message">{{ notif.message }}</div>
         <div class="notif-time">{{ notif.created_at | date:'short' }}</div>
       </div>
-    </div>
+    </div> 
   </div>
 </div>

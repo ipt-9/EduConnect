@@ -110,6 +110,7 @@ func JoinGroupByCodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 🧩 Der eigentliche Join
 	err = DB.JoinGroupByCode(DB.DB, code, claims.UserID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Beitritt fehlgeschlagen: %v", err), http.StatusBadRequest)
@@ -117,13 +118,24 @@ func JoinGroupByCodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 🔔 Notification hinzufügen
-	groupID, _ := DB.GetGroupIDByInviteCode(DB.DB, code)
+	groupID, err := DB.GetGroupIDByInviteCode(DB.DB, code)
+	if err != nil {
+		http.Error(w, "Gruppe konnte nicht gefunden werden", http.StatusInternalServerError)
+		return
+	}
 	username, _ := DB.GetUsernameByID(DB.DB, claims.UserID)
 	msg := fmt.Sprintf("👥 %s ist der Gruppe beigetreten.", username)
 	_ = DB.CreateGroupNotification(DB.DB, int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("🎉 Du bist der Gruppe erfolgreich beigetreten!"))
+	// 📦 Gruppe als JSON zurückgeben
+	group, err := DB.GetGroupByID(DB.DB, groupID)
+	if err != nil {
+		http.Error(w, "Gruppe nicht abrufbar", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(group)
 }
 
 func GetGroupMembersHandler(w http.ResponseWriter, r *http.Request) {
@@ -182,6 +194,7 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Auth prüfen
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		http.Error(w, "Authorization Header fehlt", http.StatusUnauthorized)
@@ -197,12 +210,12 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Pfadparameter parsen
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {
 		http.Error(w, "Ungültiger Pfad", http.StatusBadRequest)
 		return
 	}
-
 	groupID, err := strconv.ParseUint(parts[2], 10, 64)
 	if err != nil {
 		http.Error(w, "Ungültige Gruppen-ID", http.StatusBadRequest)
@@ -214,39 +227,41 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("🔍 claims.UserID: %d, targetUserID: %d, groupID: %d", claims.UserID, targetUserID, groupID)
+	log.Printf("🔍 User %d versucht, sich aus Gruppe %d zu entfernen", claims.UserID, groupID)
 
-	// Nur wenn sich jemand selbst entfernen will und admin ist
-	if claims.UserID == targetUserID {
-		isAdmin, err := DB.IsUserAdminInGroup(DB.DB, groupID, targetUserID)
+	// ❗ Nur Selbstverlassen erlaubt
+	if claims.UserID != targetUserID {
+		http.Error(w, "Du kannst nur dich selbst aus der Gruppe entfernen", http.StatusForbidden)
+		return
+	}
+
+	// Prüfen ob Admin
+	isAdmin, err := DB.IsUserAdminInGroup(DB.DB, groupID, targetUserID)
+	if err != nil {
+		log.Printf("❌ Fehler bei IsUserAdminInGroup: %v", err)
+		http.Error(w, "Fehler beim Admin-Check: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if isAdmin {
+		adminCount, err := DB.CountAdminsInGroup(DB.DB, groupID)
 		if err != nil {
-			log.Printf("❌ Fehler bei IsUserAdminInGroup: %v", err)
-			http.Error(w, "Fehler beim Admin-Check: "+err.Error(), http.StatusInternalServerError)
+			log.Printf("❌ Fehler bei CountAdminsInGroup: %v", err)
+			http.Error(w, "Fehler beim Admin-Zählen: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		log.Printf("👤 User %d ist Admin in Gruppe %d: %v", targetUserID, groupID, isAdmin)
 
-		if isAdmin {
-			adminCount, err := DB.CountAdminsInGroup(DB.DB, groupID)
-			if err != nil {
-				log.Printf("❌ Fehler bei CountAdminsInGroup: %v", err)
-				http.Error(w, "Fehler beim Zählen der Admins: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-			log.Printf("👑 Adminanzahl in Gruppe %d: %d", groupID, adminCount)
-
-			if adminCount <= 1 {
-				log.Printf("⛔ Letzter Admin (%d) darf sich nicht selbst entfernen", targetUserID)
-				http.Error(w, "Fehler beim Entfernen: Admins können sich nicht selbst entfernen", http.StatusForbidden)
-				return
-			}
+		if adminCount <= 1 {
+			http.Error(w, "⚠️ Du bist der letzte Admin dieser Gruppe. Übertrage zuerst die Admin-Rolle an ein anderes Mitglied, bevor du sie verlässt.", http.StatusForbidden)
+			return
 		}
 	}
 
-	err = DB.RemoveGroupMember(DB.DB, groupID, targetUserID, claims.UserID)
+	// ✅ Jetzt darf sich der User entfernen
+	err = DB.SelfLeaveGroup(DB.DB, groupID, targetUserID)
 	if err != nil {
-		log.Printf("❌ Fehler bei RemoveGroupMember: %v", err)
-		http.Error(w, fmt.Sprintf("Fehler beim Entfernen: %v", err), http.StatusForbidden)
+		log.Printf("❌ Fehler beim Entfernen: %v", err)
+		http.Error(w, "Fehler beim Verlassen der Gruppe: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -254,11 +269,11 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 	msg := fmt.Sprintf("🚪 %s hat die Gruppe verlassen.", username)
 	_ = DB.CreateGroupNotification(DB.DB, int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
 
-	log.Printf("✅ %s (ID %d) wurde erfolgreich aus Gruppe %d entfernt", username, targetUserID, groupID)
+	log.Printf("✅ %s (ID %d) hat Gruppe %d verlassen", username, targetUserID, groupID)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"message": "✅ Mitglied erfolgreich entfernt",
+		"message": "✅ Du hast die Gruppe verlassen",
 	})
 }
 
