@@ -29,6 +29,7 @@ func main() {
 	r.HandleFunc("/logout", routes.Logout).Methods("POST", "OPTIONS")
 	r.HandleFunc("/verify-2fa", routes.Verify2FA).Methods("POST", "OPTIONS")
 
+	r.HandleFunc("/users/me/submissions", routes.GetMySubmissionsHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/me", routes.Me).Methods("GET", "OPTIONS")
 	r.HandleFunc("/my-courses", routes.GetMyCourses).Methods("GET", "OPTIONS")
 	r.HandleFunc("/courses/{id}/tasks", routes.GetTasksByCourse).Methods("GET", "OPTIONS")

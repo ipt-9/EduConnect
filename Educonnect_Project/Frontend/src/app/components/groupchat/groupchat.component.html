@@ -1,20 +1,70 @@
 <div class="chat-wrapper">
+  <!-- 🔽 Submission Toggle -->
+  <div class="submission-toggle">
+    <button (click)="loadSubmissions()">
+      {{ (showSubmissionList ? '⬆️ Verstecken' : '📦 Submissions anzeigen') }}
+
+    </button>
+  </div>
+
+  <!-- 📦 Submission-Liste -->
+  <div class="submission-list" *ngIf="showSubmissionList">
+    <h3>Deine gelösten Aufgaben:</h3>
+    <ul>
+      <li *ngFor="let s of submissions">
+        🧩 {{ s.task_title }}
+        <button (click)="shareSubmission(s.task_id)">📤 Teilen</button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 💬 Nachrichten -->
   <div class="messages" #scrollContainer>
     <div
       *ngFor="let msg of messages"
       [ngClass]="{ 'own': isOwnMessage(msg), 'other': !isOwnMessage(msg) }"
       class="bubble"
+      [class.submission]="msg.message_type === 'submission'"
     >
+      <!-- 🧠 Metadaten -->
       <div class="meta">
         <span class="username">{{ msg.user.username }}</span>
         <span class="time">• {{ msg.created_at | date: 'shortTime' }}</span>
       </div>
-      <div class="text">{{ msg.message }}</div>
+
+      <!-- 🎁 Submission als Anhang -->
+      <ng-container *ngIf="msg.message_type === 'submission'; else normalText">
+        <div
+          class="submission-attachment-box"
+          (click)="openSubmission(msg)"
+          style="cursor: pointer;"
+        >
+          <div class="header-line">
+            <span class="title">✅ {{ msg.user.username }} hat eine Aufgabe gelöst!</span>
+            <span class="time">{{ msg.created_at | date: 'shortTime' }}</span>
+          </div>
+          <div class="meta-line">
+            🧩 <strong>{{ extractTaskTitle(msg.message) }}</strong>
+            &nbsp;&nbsp;🕒 {{ extractExecutionTime(msg.message) }}ms
+          </div>
+          <div class="info-line">
+            📎 Lösung verfügbar – Klick zum Öffnen
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ✉️ Normale Nachricht -->
+      <ng-template #normalText>
+        <div class="text">{{ msg.message }}</div>
+      </ng-template>
     </div>
   </div>
-
+  
+  <!-- 🧾 Eingabefeld -->
   <div class="input-bar">
-    <input [(ngModel)]="messageText" placeholder="Nachricht schreiben..." (keyup.enter)="sendMessage()" />
+    <label>
+      <input [(ngModel)]="messageText" placeholder="Nachricht schreiben..." (keyup.enter)="sendMessage()" />
+    </label>
     <button (click)="sendMessage()">➤</button>
   </div>
 </div>

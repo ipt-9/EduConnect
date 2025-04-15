@@ -176,27 +176,27 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 		log.Println("✅ Aufgabe erfolgreich abgeschlossen – starte Notification-Logik")
 
 		// Titel der Aufgabe laden
-		taskTitle, err := DB.GetTaskTitleByID(DB.DB, input.TaskID)
+		taskTitle, err := DB.GetTaskTitleByID(input.TaskID)
 		if err != nil {
 			log.Println("⚠️ Konnte Aufgabentitel nicht laden:", err)
 			taskTitle = "Unbekannte Aufgabe"
 		}
 
 		// Username laden
-		username, err := DB.GetUsernameByID(DB.DB, userID)
+		username, err := DB.GetUsernameByID(userID)
 		if err != nil {
 			log.Println("⚠️ Konnte Username nicht laden:", err)
 			username = "Ein Mitglied"
 		}
 
 		// Gruppen-IDs laden
-		groupIDs, err := DB.GetGroupIDsForUser(DB.DB, userID)
+		groupIDs, err := DB.GetGroupIDsForUser(userID)
 		if err != nil {
 			log.Println("⚠️ Konnte Gruppen nicht laden:", err)
 		} else {
 			for _, gid := range groupIDs {
 				msg := fmt.Sprintf("✅ %s hat die Aufgabe „%s“ abgeschlossen.", username, taskTitle)
-				err := DB.CreateGroupNotification(DB.DB, gid, &userID, "TASK_COMPLETED", msg)
+				err := DB.CreateGroupNotification(gid, &userID, "TASK_COMPLETED", msg)
 				if err != nil {
 					log.Println("❌ Fehler beim Speichern der Notification:", err)
 				} else {

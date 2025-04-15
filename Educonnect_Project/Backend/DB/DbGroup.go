@@ -18,8 +18,8 @@ type Group struct {
 }
 
 // CreateGroup erstellt eine neue Gruppe mit Invite-Code und trägt den Ersteller als Admin ein
-func CreateGroup(db *sql.DB, name string, description string, createdBy uint64) (*Group, error) {
-	tx, err := db.Begin()
+func CreateGroup(name string, description string, createdBy uint64) (*Group, error) {
+	tx, err := DB.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -65,11 +65,12 @@ func CreateGroup(db *sql.DB, name string, description string, createdBy uint64) 
 		InviteCode:  inviteCode,
 	}, nil
 }
-func JoinGroupByCode(db *sql.DB, inviteCode string, userID uint64) error {
+
+func JoinGroupByCode(inviteCode string, userID uint64) error {
 	var groupID uint64
 
 	// 1. Gruppe mit Code finden
-	err := db.QueryRow(`SELECT id FROM user_groups WHERE invite_code = ?`, inviteCode).Scan(&groupID)
+	err := DB.QueryRow(`SELECT id FROM user_groups WHERE invite_code = ?`, inviteCode).Scan(&groupID)
 	if err == sql.ErrNoRows {
 		return fmt.Errorf("Ungültiger Einladungscode")
 	} else if err != nil {
@@ -77,7 +78,7 @@ func JoinGroupByCode(db *sql.DB, inviteCode string, userID uint64) error {
 	}
 
 	// 2. Mitgliedseintrag einfügen (nur wenn nicht vorhanden)
-	_, err = db.Exec(`
+	_, err = DB.Exec(`
 		INSERT INTO group_members (group_id, user_id, role)
 		VALUES (?, ?, 'member')
 		ON DUPLICATE KEY UPDATE role = role`, // verhindert Duplikat-Fehler
@@ -93,8 +94,8 @@ type GroupMember struct {
 	Role     string `json:"role"`
 }
 
-func GetGroupMembers(db *sql.DB, groupID uint64) ([]GroupMember, error) {
-	rows, err := db.Query(`
+func GetGroupMembers(groupID uint64) ([]GroupMember, error) {
+	rows, err := DB.Query(`
 		SELECT u.id, u.username, u.email, gm.role
 		FROM group_members gm
 		JOIN users u ON gm.user_id = u.id
@@ -115,10 +116,10 @@ func GetGroupMembers(db *sql.DB, groupID uint64) ([]GroupMember, error) {
 	}
 	return members, nil
 }
-func RemoveGroupMember(db *sql.DB, groupID, targetUserID, requesterID uint64) error {
+func RemoveGroupMember(groupID, targetUserID, requesterID uint64) error {
 	// 1. Prüfen, ob der Requester Admin ist
 	var role string
-	err := db.QueryRow(`
+	err := DB.QueryRow(`
 		SELECT role FROM group_members 
 		WHERE group_id = ? AND user_id = ?`,
 		groupID, requesterID).Scan(&role)
@@ -133,7 +134,7 @@ func RemoveGroupMember(db *sql.DB, groupID, targetUserID, requesterID uint64) er
 	}
 
 	// 2. Entfernen
-	_, err = db.Exec(`
+	_, err = DB.Exec(`
 		DELETE FROM group_members 
 		WHERE group_id = ? AND user_id = ?`,
 		groupID, targetUserID)
@@ -141,10 +142,10 @@ func RemoveGroupMember(db *sql.DB, groupID, targetUserID, requesterID uint64) er
 	return err
 }
 
-func UpdateMemberRole(db *sql.DB, groupID, targetUserID, requesterID uint64, newRole string) error {
+func UpdateMemberRole(groupID, targetUserID, requesterID uint64, newRole string) error {
 	// 1. Rolle vom Requester prüfen
 	var requesterRole string
-	err := db.QueryRow(`
+	err := DB.QueryRow(`
 		SELECT role FROM group_members
 		WHERE group_id = ? AND user_id = ?`,
 		groupID, requesterID).Scan(&requesterRole)
@@ -164,7 +165,7 @@ func UpdateMemberRole(db *sql.DB, groupID, targetUserID, requesterID uint64, new
 	}
 
 	// 3. Rolle aktualisieren
-	_, err = db.Exec(`
+	_, err = DB.Exec(`
 		UPDATE group_members
 		SET role = ?
 		WHERE group_id = ? AND user_id = ?`,
@@ -172,41 +173,64 @@ func UpdateMemberRole(db *sql.DB, groupID, targetUserID, requesterID uint64, new
 
 	return err
 }
-func SaveGroupMessage(db *sql.DB, groupID, userID uint64, message string, messageType string) error {
+func SaveGroupMessage(groupID, userID uint64, message string, messageType string, linkedTaskId *uint64) error {
 	log.Printf("💾 INSERT group_message | Group: %d | User: %d | Type: %s", groupID, userID, messageType)
 
-	_, err := db.Exec(`
-		INSERT INTO group_messages (group_id, user_id, message, message_type, created_at)
-		VALUES (?, ?, ?, ?, NOW())
-	`, groupID, userID, message, messageType)
+	res, err := DB.Exec(`
+		INSERT INTO group_messages (group_id, user_id, message, message_type, linked_task_id, created_at)
+		VALUES (?, ?, ?, ?,?, NOW())
+	`, groupID, userID, message, messageType, linkedTaskId)
 
 	if err != nil {
-		log.Println("❌ Insert fehlgeschlagen:", err)
+		log.Printf("❌ Fehler beim INSERT: %v", err)
+		return err
 	}
-	return err
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("⚠️ Fehler beim Auslesen von RowsAffected: %v", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		log.Printf("⚠️ WARNUNG: Der Insert hat 0 Zeilen verändert (keine Speicherung erfolgt!)")
+	} else {
+		log.Printf("✅ %d Zeile(n) erfolgreich eingefügt", rowsAffected)
+	}
+
+	return nil
 }
 
 type GroupChatMessage struct {
-	Message   string    `json:"message"`
-	CreatedAt time.Time `json:"created_at"`
-	User      struct {
+	Message      string    `json:"message"`
+	MessageType  string    `json:"message_type"`
+	LinkedTaskID *uint64   `json:"linked_task_id,omitempty"` // ✅ Spaltenname wie in DB!
+	CreatedAt    time.Time `json:"created_at"`
+	User         struct {
 		ID                uint64  `json:"id"`
 		Username          string  `json:"username"`
 		Email             string  `json:"email"`
 		ProfilePictureUrl *string `json:"profile_picture_url"`
 	} `json:"user"`
-	MessageType string
 }
 
-func GetFullGroupMessages(db *sql.DB, groupID uint64, limit int) ([]GroupChatMessage, error) {
-	rows, err := db.Query(`
-		SELECT gm.message, gm.created_at,
-		       u.id, u.username, u.email, u.profile_picture_url
+func GetFullGroupMessages(groupID uint64, limit int) ([]GroupChatMessage, error) {
+	rows, err := DB.Query(`
+		SELECT 
+			gm.message,
+			gm.created_at,
+			gm.message_type,
+			gm.linked_task_id,  -- ✅ NEU!
+			u.id,
+			u.username,
+			u.email,
+			u.profile_picture_url
 		FROM group_messages gm
 		JOIN users u ON gm.user_id = u.id
 		WHERE gm.group_id = ?
 		ORDER BY gm.created_at DESC
-		LIMIT ?`, groupID, limit)
+		LIMIT ?
+	`, groupID, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -215,9 +239,13 @@ func GetFullGroupMessages(db *sql.DB, groupID uint64, limit int) ([]GroupChatMes
 	var messages []GroupChatMessage
 	for rows.Next() {
 		var msg GroupChatMessage
+		var linkedTaskID *uint64 // ⬅️ benötigt für NULL handling
+
 		err := rows.Scan(
 			&msg.Message,
 			&msg.CreatedAt,
+			&msg.MessageType,
+			&linkedTaskID, // ✅ NEU!
 			&msg.User.ID,
 			&msg.User.Username,
 			&msg.User.Email,
@@ -226,12 +254,16 @@ func GetFullGroupMessages(db *sql.DB, groupID uint64, limit int) ([]GroupChatMes
 		if err != nil {
 			return nil, err
 		}
+
+		msg.LinkedTaskID = linkedTaskID // ✅ Setzen
 		messages = append(messages, msg)
 	}
+
 	return messages, nil
 }
-func GetGroupsForUser(db *sql.DB, userID uint64) ([]Group, error) {
-	rows, err := db.Query(`
+
+func GetGroupsForUser(userID uint64) ([]Group, error) {
+	rows, err := DB.Query(`
 		SELECT g.id, g.name, g.description, g.created_by, g.created_at, g.invite_code
 		FROM user_groups g
 		JOIN group_members gm ON g.id = gm.group_id
@@ -253,9 +285,9 @@ func GetGroupsForUser(db *sql.DB, userID uint64) ([]Group, error) {
 
 	return groups, nil
 }
-func GetGroupByID(db *sql.DB, groupID uint64) (*Group, error) {
+func GetGroupByID(groupID uint64) (*Group, error) {
 	var g Group
-	err := db.QueryRow(`
+	err := DB.QueryRow(`
 		SELECT id, name, description, created_by, created_at, invite_code
 		FROM user_groups
 		WHERE id = ?
@@ -266,18 +298,20 @@ func GetGroupByID(db *sql.DB, groupID uint64) (*Group, error) {
 	}
 	return &g, nil
 }
-func GetUserByID(db *sql.DB, userID uint64) (User, error) {
+
+func GetUserByID(userID uint64) (User, error) {
 	var user User
-	err := db.QueryRow(`
+	err := DB.QueryRow(`
 		SELECT id, username, email, profile_picture_url
 		FROM users
 		WHERE id = ?
 	`, userID).Scan(&user.ID, &user.Username, &user.Email, &user.ProfilePictureUrl)
 	return user, err
 }
-func GetGroupIDByInviteCode(db *sql.DB, code string) (uint64, error) {
+
+func GetGroupIDByInviteCode(code string) (uint64, error) {
 	var groupID uint64
-	err := db.QueryRow(`
+	err := DB.QueryRow(`
 		SELECT id FROM user_groups
 		WHERE invite_code = ?
 	`, code).Scan(&groupID)
@@ -288,21 +322,32 @@ func GetGroupIDByInviteCode(db *sql.DB, code string) (uint64, error) {
 
 	return groupID, nil
 }
-func CountAdminsInGroup(db *sql.DB, groupID uint64) (int, error) {
+
+func CountAdminsInGroup(groupID uint64) (int, error) {
 	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM group_members WHERE group_id = ? AND role = 'admin'", groupID).Scan(&count)
+	err := DB.QueryRow(`
+		SELECT COUNT(*) 
+		FROM group_members 
+		WHERE group_id = ? AND role = 'admin'`,
+		groupID).Scan(&count)
 	return count, err
 }
-func IsUserAdminInGroup(db *sql.DB, groupID uint64, userID uint64) (bool, error) {
+
+func IsUserAdminInGroup(groupID uint64, userID uint64) (bool, error) {
 	var role string
-	err := db.QueryRow("SELECT role FROM group_members WHERE group_id = ? AND user_id = ?", groupID, userID).Scan(&role)
+	err := DB.QueryRow(`
+		SELECT role 
+		FROM group_members 
+		WHERE group_id = ? AND user_id = ?`,
+		groupID, userID).Scan(&role)
 	if err != nil {
 		return false, err
 	}
 	return role == "admin", nil
 }
-func SelfLeaveGroup(db *sql.DB, groupID, userID uint64) error {
-	_, err := db.Exec(`
+
+func SelfLeaveGroup(groupID, userID uint64) error {
+	_, err := DB.Exec(`
 		DELETE FROM group_members 
 		WHERE group_id = ? AND user_id = ?`,
 		groupID, userID)
@@ -315,15 +360,15 @@ type Submission struct {
 	ExecutionTime int
 }
 
-func GetSubmissionByTaskAndUser(db *sql.DB, taskID uint64, userID uint64) (*Submission, error) {
+func GetSubmissionByTaskAndUser(taskID uint64, userID uint64) (*Submission, error) {
 	var sub Submission
-	err := db.QueryRow(`
-	SELECT code, output, execution_time_ms
-	FROM submissions
-	WHERE task_id = ? AND user_id = ? AND is_successful = 1
-	ORDER BY submitted_at DESC
-	LIMIT 1
-`, taskID, userID).Scan(&sub.Code, &sub.Output, &sub.ExecutionTime)
+	err := DB.QueryRow(`
+		SELECT code, output, execution_time_ms
+		FROM submissions
+		WHERE task_id = ? AND user_id = ? AND is_successful = 1
+		ORDER BY submitted_at DESC
+		LIMIT 1
+	`, taskID, userID).Scan(&sub.Code, &sub.Output, &sub.ExecutionTime)
 
 	if err != nil {
 		return nil, err

@@ -66,7 +66,7 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 3. Gruppe anlegen
 	log.Printf("🛠️  Starte Erstellen der Gruppe durch User-ID: %d\n", claims.UserID)
-	group, err := DB.CreateGroup(DB.DB, req.Name, req.Description, claims.UserID)
+	group, err := DB.CreateGroup(req.Name, req.Description, claims.UserID)
 	if err != nil {
 		log.Printf("🔥 Fehler beim Erstellen der Gruppe: %v\n", err)
 		http.Error(w, "Fehler beim Erstellen der Gruppe: "+err.Error(), http.StatusInternalServerError)
@@ -111,24 +111,24 @@ func JoinGroupByCodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 🧩 Der eigentliche Join
-	err = DB.JoinGroupByCode(DB.DB, code, claims.UserID)
+	err = DB.JoinGroupByCode(code, claims.UserID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Beitritt fehlgeschlagen: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	// 🔔 Notification hinzufügen
-	groupID, err := DB.GetGroupIDByInviteCode(DB.DB, code)
+	groupID, err := DB.GetGroupIDByInviteCode(code)
 	if err != nil {
 		http.Error(w, "Gruppe konnte nicht gefunden werden", http.StatusInternalServerError)
 		return
 	}
-	username, _ := DB.GetUsernameByID(DB.DB, claims.UserID)
+	username, _ := DB.GetUsernameByID(claims.UserID)
 	msg := fmt.Sprintf("👥 %s ist der Gruppe beigetreten.", username)
-	_ = DB.CreateGroupNotification(DB.DB, int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
+	_ = DB.CreateGroupNotification(int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
 
 	// 📦 Gruppe als JSON zurückgeben
-	group, err := DB.GetGroupByID(DB.DB, groupID)
+	group, err := DB.GetGroupByID(groupID)
 	if err != nil {
 		http.Error(w, "Gruppe nicht abrufbar", http.StatusInternalServerError)
 		return
@@ -174,7 +174,7 @@ func GetGroupMembersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 📥 Mitglieder abrufen
-	members, err := DB.GetGroupMembers(DB.DB, groupID)
+	members, err := DB.GetGroupMembers(groupID)
 	if err != nil {
 		http.Error(w, "Fehler beim Laden der Gruppenmitglieder: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -236,7 +236,7 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prüfen ob Admin
-	isAdmin, err := DB.IsUserAdminInGroup(DB.DB, groupID, targetUserID)
+	isAdmin, err := DB.IsUserAdminInGroup(groupID, targetUserID)
 	if err != nil {
 		log.Printf("❌ Fehler bei IsUserAdminInGroup: %v", err)
 		http.Error(w, "Fehler beim Admin-Check: "+err.Error(), http.StatusInternalServerError)
@@ -244,7 +244,7 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isAdmin {
-		adminCount, err := DB.CountAdminsInGroup(DB.DB, groupID)
+		adminCount, err := DB.CountAdminsInGroup(groupID)
 		if err != nil {
 			log.Printf("❌ Fehler bei CountAdminsInGroup: %v", err)
 			http.Error(w, "Fehler beim Admin-Zählen: "+err.Error(), http.StatusInternalServerError)
@@ -258,16 +258,16 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ✅ Jetzt darf sich der User entfernen
-	err = DB.SelfLeaveGroup(DB.DB, groupID, targetUserID)
+	err = DB.SelfLeaveGroup(groupID, targetUserID)
 	if err != nil {
 		log.Printf("❌ Fehler beim Entfernen: %v", err)
 		http.Error(w, "Fehler beim Verlassen der Gruppe: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	username, _ := DB.GetUsernameByID(DB.DB, uint64(targetUserID))
+	username, _ := DB.GetUsernameByID(uint64(targetUserID))
 	msg := fmt.Sprintf("🚪 %s hat die Gruppe verlassen.", username)
-	_ = DB.CreateGroupNotification(DB.DB, int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
+	_ = DB.CreateGroupNotification(int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
 
 	log.Printf("✅ %s (ID %d) hat Gruppe %d verlassen", username, targetUserID, groupID)
 
@@ -332,16 +332,16 @@ func UpdateMemberRoleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = DB.UpdateMemberRole(DB.DB, groupID, targetUserID, claims.UserID, req.Role)
+	err = DB.UpdateMemberRole(groupID, targetUserID, claims.UserID, req.Role)
 	if err != nil {
 		http.Error(w, "Fehler beim Aktualisieren der Rolle: "+err.Error(), http.StatusForbidden)
 		return
 	}
 
 	// 🔔 Notification hinzufügen
-	username, _ := DB.GetUsernameByID(DB.DB, targetUserID)
+	username, _ := DB.GetUsernameByID(targetUserID)
 	msg := fmt.Sprintf("🔒 %s wurde zum Gruppen-%s gemacht.", username, req.Role)
-	_ = DB.CreateGroupNotification(DB.DB, int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
+	_ = DB.CreateGroupNotification(int64(groupID), &claims.UserID, "GROUP_EVENT", msg)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
@@ -380,7 +380,7 @@ func GetUserGroupsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 📥 Gruppen aus DB laden
-	groups, err := DB.GetGroupsForUser(DB.DB, claims.UserID)
+	groups, err := DB.GetGroupsForUser(claims.UserID)
 	if err != nil {
 		http.Error(w, "Fehler beim Laden der Gruppen: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -422,7 +422,7 @@ func GetGroupByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 📦 Datenbank aufrufen
-	group, err := DB.GetGroupByID(DB.DB, groupID)
+	group, err := DB.GetGroupByID(groupID)
 	if err != nil {
 		http.Error(w, "Gruppe nicht gefunden: "+err.Error(), http.StatusNotFound)
 		return
@@ -431,5 +431,3 @@ func GetGroupByIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(group)
 }
-
-// levin & tomas were here

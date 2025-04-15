@@ -1,27 +1,29 @@
 package DB
 
 import (
-	"database/sql"
 	"time"
 )
 
-func GetTaskTitleByID(db *sql.DB, taskID uint64) (string, error) {
+func GetTaskTitleByID(taskID uint64) (string, error) {
 	var title string
-	err := db.QueryRow("SELECT title FROM tasks WHERE id = ?", taskID).Scan(&title)
+	err := DB.QueryRow("SELECT title FROM tasks WHERE id = ?", taskID).Scan(&title)
 	return title, err
 }
-func GetUsernameByID(db *sql.DB, userID uint64) (string, error) {
+
+func GetUsernameByID(userID uint64) (string, error) {
 	var username string
-	err := db.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&username)
+	err := DB.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&username)
 	return username, err
 }
-func CreateGroupNotification(db *sql.DB, groupID int64, userID *uint64, notifType string, message string) error {
+
+func CreateGroupNotification(groupID int64, userID *uint64, notifType string, message string) error {
 	query := `INSERT INTO group_notifications (group_id, user_id, type, message) VALUES (?, ?, ?, ?)`
-	_, err := db.Exec(query, groupID, userID, notifType, message)
+	_, err := DB.Exec(query, groupID, userID, notifType, message)
 	return err
 }
-func GetGroupIDsForUser(db *sql.DB, userID uint64) ([]int64, error) {
-	rows, err := db.Query(`
+
+func GetGroupIDsForUser(userID uint64) ([]int64, error) {
+	rows, err := DB.Query(`
 		SELECT group_id FROM group_members
 		WHERE user_id = ?
 	`, userID)
@@ -41,9 +43,10 @@ func GetGroupIDsForUser(db *sql.DB, userID uint64) ([]int64, error) {
 
 	return groupIDs, nil
 }
-func IsUserInGroup(db *sql.DB, groupID int64, userID uint64) (bool, error) {
+
+func IsUserInGroup(groupID int64, userID uint64) (bool, error) {
 	var exists bool
-	err := db.QueryRow(`
+	err := DB.QueryRow(`
 		SELECT EXISTS (
 			SELECT 1 FROM group_members
 			WHERE group_id = ? AND user_id = ?
@@ -51,8 +54,9 @@ func IsUserInGroup(db *sql.DB, groupID int64, userID uint64) (bool, error) {
 	`, groupID, userID).Scan(&exists)
 	return exists, err
 }
-func GetGroupNotifications(db *sql.DB, groupID int64) ([]map[string]interface{}, error) {
-	rows, err := db.Query(`
+
+func GetGroupNotifications(groupID int64) ([]map[string]interface{}, error) {
+	rows, err := DB.Query(`
 		SELECT message, created_at
 		FROM group_notifications
 		WHERE group_id = ?
@@ -68,8 +72,9 @@ func GetGroupNotifications(db *sql.DB, groupID int64) ([]map[string]interface{},
 	for rows.Next() {
 		var msg string
 		var createdAt time.Time
-		rows.Scan(&msg, &createdAt)
-
+		if err := rows.Scan(&msg, &createdAt); err != nil {
+			return nil, err
+		}
 		notifications = append(notifications, map[string]interface{}{
 			"message":    msg,
 			"created_at": createdAt,
@@ -77,4 +82,35 @@ func GetGroupNotifications(db *sql.DB, groupID int64) ([]map[string]interface{},
 	}
 
 	return notifications, nil
+}
+
+type SubmissionInfo struct {
+	TaskID    uint64 `json:"task_id"`
+	TaskTitle string `json:"task_title"`
+}
+
+// GetSuccessfulSubmissionsByUser gibt alle erfolgreich gelösten Aufgaben eines Users zurück
+func GetSuccessfulSubmissionsByUser(userID uint64) ([]SubmissionInfo, error) {
+	rows, err := DB.Query(`
+		SELECT s.task_id, t.title
+		FROM submissions s
+		JOIN tasks t ON s.task_id = t.id
+		WHERE s.user_id = ? AND s.is_successful = 1
+		GROUP BY s.task_id
+		ORDER BY MAX(s.submitted_at) DESC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []SubmissionInfo
+	for rows.Next() {
+		var s SubmissionInfo
+		if err := rows.Scan(&s.TaskID, &s.TaskTitle); err != nil {
+			return nil, err
+		}
+		result = append(result, s)
+	}
+	return result, nil
 }
