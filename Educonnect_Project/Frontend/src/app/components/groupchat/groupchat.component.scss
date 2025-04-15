@@ -17,7 +17,7 @@
 }
 
 .bubble {
-  max-width: 60%;
+  max-width: 70%;
   padding: 0.8rem 1rem;
   border-radius: 1.5rem;
   word-wrap: break-word;
@@ -25,9 +25,11 @@
   background-color: #f1f1f1;
   color: #333;
   align-self: flex-start;
+  position: relative;
+  transition: all 0.2s ease-in-out;
 
   &.own {
-    background-color: #4caf50; // 💚 Grün
+    background-color: #4caf50;
     color: white;
     align-self: flex-end;
   }
@@ -36,7 +38,6 @@
     font-size: 0.75rem;
     color: #888;
     display: flex;
-    gap: 0.4rem; 
     justify-content: space-between;
     margin-bottom: 0.3rem;
   }
@@ -69,5 +70,98 @@
     height: 2.8rem;
     font-size: 1.2rem;
     cursor: pointer;
+  }
+}
+
+// 🎁 Submission-Anhänge wie ChatGPT
+.submission-attachment-box {
+  background: #ffffff;
+  border: 2px solid #4caf50;
+  border-left: 6px solid #4caf50;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: box-shadow 0.2s ease-in-out;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  }
+
+  .header-line {
+    display: flex;
+    justify-content: space-between;
+    color: #4caf50;
+    font-weight: bold;
+  }
+
+  .meta-line {
+    color: #333;
+    font-size: 0.85rem;
+  }
+
+  .info-line {
+    font-style: italic;
+    color: #666;
+  }
+}
+
+// 📦 Submission-Liste oben
+.submission-toggle {
+  padding: 0.5rem 1rem;
+  text-align: center;
+
+  button {
+    background-color: #e0e0e0;
+    border: none;
+    border-radius: 1rem;
+    padding: 0.5rem 1.2rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #d0d0d0;
+    }
+  }
+}
+
+.submission-list {
+  padding: 0 1.5rem 0.5rem;
+
+  h3 {
+    margin-bottom: 0.5rem;
+    color: #4caf50;
+    font-size: 1rem;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+
+    li {
+      padding: 0.3rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 0.7rem;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.8rem;
+        cursor: pointer;
+
+        &:hover {
+          background-color: #388e3c;
+        }
+      }
+    }
   }
 }

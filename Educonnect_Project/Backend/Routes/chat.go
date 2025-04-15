@@ -18,7 +18,8 @@ import (
 
 type GroupChatMessage struct {
 	Message     string    `json:"message"`
-	MessageType string    `json:"message_type"` // ✅ HIER hinzufügen
+	MessageType string    `json:"message_type"`
+	TaskID      *uint64   `json:"task_id,omitempty"` // 🆕 HIER ergänzen!
 	CreatedAt   time.Time `json:"created_at"`
 	User        struct {
 		ID                uint64  `json:"id"`
@@ -81,7 +82,7 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 	groupClients[groupID][conn] = true
 	groupClientsMutex.Unlock()
 
-	pastMessages, err := DB.GetFullGroupMessages(DB.DB, groupID, 1000)
+	pastMessages, err := DB.GetFullGroupMessages(groupID, 1000)
 	if err != nil {
 		log.Printf("❌ Fehler beim Laden alter Nachrichten: %v", err)
 	} else {
@@ -113,13 +114,14 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 			msgType = "text"
 		}
 
-		err = DB.SaveGroupMessage(DB.DB, groupID, userID, incoming.Message, msgType)
+		err = DB.SaveGroupMessage(groupID, userID, incoming.Message, msgType, nil)
+
 		if err != nil {
 			log.Printf("❌ Nachricht konnte nicht gespeichert werden: %v", err)
 			continue
 		}
 
-		user, err := DB.GetUserByID(DB.DB, userID)
+		user, err := DB.GetUserByID(userID)
 		if err != nil {
 			log.Printf("❌ Benutzer konnte nicht geladen werden: %v", err)
 			continue
@@ -162,9 +164,16 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 func GetGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 
-	// JWT prüfen (wie gehabt)
+	// 1️⃣ OPTIONS Preflight zuerst abfangen
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// 2️⃣ Authorization prüfen mit CORS
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		enableCORS(w) // 💥 Wichtig: Header auch bei Fehler
 		http.Error(w, "Token fehlt oder ungültig", http.StatusUnauthorized)
 		return
 	}
@@ -175,25 +184,29 @@ func GetGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		return jwtKey, nil
 	})
 	if err != nil || !token.Valid {
+		enableCORS(w)
 		http.Error(w, "Token ungültig", http.StatusUnauthorized)
 		return
 	}
 
-	// Gruppe-ID aus Pfad
+	// 3️⃣ Gruppen-ID aus der URL extrahieren
 	parts := strings.Split(r.URL.Path, "/")
 	groupID, err := strconv.ParseUint(parts[2], 10, 64)
 	if err != nil {
+		enableCORS(w)
 		http.Error(w, "Ungültige Gruppen-ID", http.StatusBadRequest)
 		return
 	}
 
-	// DB-Call
-	messages, err := DB.GetFullGroupMessages(DB.DB, groupID, 1000000)
+	// 4️⃣ Datenbankabfrage
+	messages, err := DB.GetFullGroupMessages(groupID, 1000000)
 	if err != nil {
+		enableCORS(w)
 		http.Error(w, "Fehler beim Laden: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// 5️⃣ Erfolgreiche JSON-Antwort mit Header
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(messages)
 }
@@ -215,6 +228,7 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	// 🔐 JWT prüfen
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		enableCORS(w)
 		http.Error(w, "Authorization Header fehlt", http.StatusUnauthorized)
 		log.Println("⛔ Kein oder ungültiger Authorization Header")
 		return
@@ -225,6 +239,7 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return jwtKey, nil
 	})
 	if err != nil || !token.Valid {
+		enableCORS(w)
 		http.Error(w, "Ungültiges oder abgelaufenes Token", http.StatusUnauthorized)
 		log.Println("⛔ Token ungültig:", err)
 		return
@@ -233,13 +248,10 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 🔢 Gruppen-ID aus Pfad
 	vars := mux.Vars(r)
-	log.Println("🌐 Mux Vars:", vars)
-
 	groupIDStr := vars["id"]
-	log.Println("➡️ Gruppen-ID aus URL:", groupIDStr)
-
 	groupID, err := strconv.Atoi(groupIDStr)
 	if err != nil {
+		enableCORS(w)
 		http.Error(w, "Ungültige Gruppen-ID", http.StatusBadRequest)
 		log.Println("⛔ Fehler beim Parsen der Gruppen-ID:", err)
 		return
@@ -250,23 +262,23 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		TaskID int `json:"task_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		enableCORS(w)
 		http.Error(w, "Ungültiges JSON", http.StatusBadRequest)
 		log.Println("⛔ Fehler beim Parsen des JSON:", err)
 		return
 	}
-	log.Println("📦 Aufgabe ID:", req.TaskID)
 
 	// ✅ Submission, Task-Titel, Username laden
-	sub, err := DB.GetSubmissionByTaskAndUser(DB.DB, uint64(req.TaskID), claims.UserID)
+	sub, err := DB.GetSubmissionByTaskAndUser(uint64(req.TaskID), claims.UserID)
 	if err != nil {
+		enableCORS(w)
 		http.Error(w, "Keine gültige Lösung gefunden", http.StatusNotFound)
 		log.Println("⛔ Keine gültige Submission:", err)
 		return
 	}
-	title, _ := DB.GetTaskTitleByID(DB.DB, uint64(req.TaskID))
-	username, _ := DB.GetUsernameByID(DB.DB, claims.UserID)
-
-	log.Println("✅ Submission geladen von", username, "| Aufgabe:", title)
+	title, _ := DB.GetTaskTitleByID(uint64(req.TaskID))
+	username, _ := DB.GetUsernameByID(claims.UserID)
+	user, _ := DB.GetUserByID(claims.UserID)
 
 	// 💬 Nachricht formatieren
 	msg := fmt.Sprintf(
@@ -275,14 +287,46 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	// 💾 Nachricht speichern
-	err = DB.SaveGroupMessage(DB.DB, uint64(groupID), claims.UserID, msg, "submission")
+	taskID := uint64(req.TaskID)
+	err = DB.SaveGroupMessage(uint64(groupID), claims.UserID, msg, "submission", &taskID)
+
 	if err != nil {
+		enableCORS(w)
 		http.Error(w, "Nachricht konnte nicht gespeichert werden", http.StatusInternalServerError)
 		log.Println("⛔ Fehler beim Speichern der Nachricht:", err)
 		return
 	}
 
-	log.Println("✅ Nachricht erfolgreich gespeichert")
+	// 📢 Nachricht direkt über WebSocket an alle Gruppenmitglieder senden
+	broadcast := DB.GroupChatMessage{
+		Message:      msg,
+		MessageType:  "submission",
+		LinkedTaskID: &taskID, // ✅ jetzt richtig!
+		CreatedAt:    time.Now(),
+		User: struct {
+			ID                uint64  `json:"id"`
+			Username          string  `json:"username"`
+			Email             string  `json:"email"`
+			ProfilePictureUrl *string `json:"profile_picture_url"`
+		}{
+			ID:                user.ID,
+			Username:          user.Username,
+			Email:             user.Email,
+			ProfilePictureUrl: user.ProfilePictureUrl,
+		},
+	}
+
+	groupClientsMutex.Lock()
+	for client := range groupClients[uint64(groupID)] {
+		if err := client.WriteJSON(broadcast); err != nil {
+			log.Printf("⚠️ WS Fehler beim Broadcast der Submission: %v", err)
+			client.Close()
+			delete(groupClients[uint64(groupID)], client)
+		}
+	}
+	groupClientsMutex.Unlock()
+
+	log.Println("✅ Nachricht erfolgreich gespeichert und gesendet")
 
 	// ✅ Erfolgreiche JSON-Antwort
 	w.Header().Set("Content-Type", "application/json")
@@ -291,4 +335,42 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		"message":        "Aufgabe erfolgreich geteilt",
 		"shared_message": msg,
 	})
+}
+
+func GetMySubmissionsHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+
+	// CORS Preflight korrekt abfangen
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		enableCORS(w) // ❗️auch hier
+		http.Error(w, "Token fehlt oder ungültig", http.StatusUnauthorized)
+		return
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		enableCORS(w) // ❗️auch hier
+		http.Error(w, "Token ungültig", http.StatusUnauthorized)
+		return
+	}
+
+	submissions, err := DB.GetSuccessfulSubmissionsByUser(claims.UserID)
+	if err != nil {
+		enableCORS(w) // ❗️auch hier bei Fehler
+		http.Error(w, "Fehler beim Abrufen der Daten: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(submissions)
 }

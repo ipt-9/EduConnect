@@ -54,7 +54,7 @@ func GetGroupNotificationsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ✅ Ist User Mitglied der Gruppe?
-	isMember, err := DB.IsUserInGroup(DB.DB, groupID, userID)
+	isMember, err := DB.IsUserInGroup(groupID, userID)
 	if err != nil {
 		log.Println("❌ DB-Fehler bei Gruppenmitgliedschaft:", err)
 		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
@@ -66,7 +66,7 @@ func GetGroupNotificationsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 📬 Notifications aus DB holen
-	notifications, err := DB.GetGroupNotifications(DB.DB, groupID)
+	notifications, err := DB.GetGroupNotifications(groupID)
 	if err != nil {
 		log.Println("❌ Fehler beim Laden der Notifications:", err)
 		http.Error(w, "Fehler beim Laden der Benachrichtigungen", http.StatusInternalServerError)
