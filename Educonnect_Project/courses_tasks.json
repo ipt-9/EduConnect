@@ -1,0 +1,289 @@
+{
+  "courses": [
+    {
+      "name": "Beginner Python",
+      "tasks": [
+        {
+          "title": "Hello World!",
+          "description": "Write a Python program that prints 'Hello, World!' to the console.",
+          "starter_code": "print()",
+          "expected_input": "",
+          "expected_output": "Hello, World!",
+          "difficulty": "easy",
+          "topic": "Hello World!"
+        },
+        {
+          "title": "Simple Math",
+          "description": "Write a program that adds 15 and 27, and prints the result.",
+          "starter_code": "print()",
+          "expected_input": "",
+          "expected_output": "42",
+          "difficulty": "easy",
+          "topic": "Simple Math"
+        },
+        {
+          "title": "Variables",
+          "description": "Create a variable called name with your name as value, and print: Hello, <name>!",
+          "starter_code": "name = ",
+          "expected_input": "",
+          "expected_output": "Hello, Alice!",
+          "difficulty": "easy",
+          "topic": "Variables"
+        },
+        {
+          "title": "Simple Input",
+          "description": "Ask the user for their age using input(), then print 'You are <age> years old.'",
+          "starter_code": "age = ",
+          "expected_input": "",
+          "expected_output": "You are 25 years old.",
+          "difficulty": "easy",
+          "topic": "Simple Input"
+        },
+        {
+          "title": "Basic If Condition",
+          "description": "Ask for a number. If the number is greater than 10, print 'Big number!', otherwise print 'Small number.'",
+          "starter_code": "number =\nprint()",
+          "expected_input": "",
+          "expected_output": "Big number! or Small number.",
+          "difficulty": "easy",
+          "topic": "Basic If Condition"
+        },
+        {
+          "title": "While Loop Counter",
+          "description": "Write a program that prints numbers from 1 to 5, each on a new line.",
+          "starter_code": "\nwhile counter <=",
+          "expected_input": "",
+          "expected_output": "1\n2\n3\n4\n5",
+          "difficulty": "easy",
+          "topic": "While Loop Counter"
+        },
+        {
+          "title": "For Loop List",
+          "description": "Create a list with apple, banana, cherry. Loop and print each fruit.",
+          "starter_code": "fruits = []\nfor fruit in",
+          "expected_input": "",
+          "expected_output": "apple\nbanana\ncherry",
+          "difficulty": "easy",
+          "topic": "For Loop List"
+        },
+        {
+          "title": "String Length",
+          "description": "Ask for a word using input(). Print 'Length: <number>' where <number> is the character count.",
+          "starter_code": "\nlen()",
+          "expected_input": "",
+          "expected_output": "Length: 5",
+          "difficulty": "easy",
+          "topic": "String Length"
+        },
+        {
+          "title": "Simple Function",
+          "description": "Write a function greet(name) that prints 'Hello, <name>!' and call it with your own name.",
+          "starter_code": "def\ngreet()",
+          "expected_input": "",
+          "expected_output": "Hello, Alice!",
+          "difficulty": "easy",
+          "topic": "Simple Function"
+        },
+        {
+          "title": "Sum of List",
+          "description": "Write a program that sums all numbers in the list [1,2,3,4,5] and prints the total.",
+          "starter_code": "numbers[]\nfor number in numbers",
+          "expected_input": "",
+          "expected_output": "15",
+          "difficulty": "easy",
+          "topic": "Sum of List"
+        }
+      ]
+    },
+    {
+      "name": "Intermediate Python",
+      "tasks": [
+        {
+          "title": "Function Addition",
+          "description": "Write a function add(a, b) that returns the sum of two numbers and print the result of add(3, 7).",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "10",
+          "difficulty": "medium",
+          "topic": "Function Addition"
+        },
+        {
+          "title": "Even or Odd",
+          "description": "Write a program that reads a number and prints Even if the number is even, or Odd if it is odd.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "Even or Odd",
+          "difficulty": "medium",
+          "topic": "Even or Odd"
+        },
+        {
+          "title": "Dictionary Lookup",
+          "description": "Create a dictionary mapping names to ages, and print the age of 'Bob'.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "25",
+          "difficulty": "medium",
+          "topic": "Dictionary Lookup"
+        },
+        {
+          "title": "Uppercase Converter",
+          "description": "Write a program that reads a text and prints it in uppercase.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "HELLO",
+          "difficulty": "medium",
+          "topic": "Uppercase Converter"
+        },
+        {
+          "title": "Reverse Countdown",
+          "description": "Write a loop to print numbers from 10 to 1 (reverse order).",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "10\n9\n8\n...\n1",
+          "difficulty": "medium",
+          "topic": "Reverse Countdown"
+        },
+        {
+          "title": "List Sum Function",
+          "description": "Write a function that takes a list of numbers and returns their sum.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "15",
+          "difficulty": "medium",
+          "topic": "List Sum Function"
+        },
+        {
+          "title": "File Writing",
+          "description": "Write 'Hello File!' into a file called output.txt.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "File should contain: Hello File!",
+          "difficulty": "medium",
+          "topic": "File Writing"
+        },
+        {
+          "title": "List Filtering",
+          "description": "Filter out numbers greater than 5 from the list [1,3,7,9,2,5].",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "[7, 9]",
+          "difficulty": "medium",
+          "topic": "List Filtering"
+        },
+        {
+          "title": "Set Uniqueness",
+          "description": "Given a list with duplicates [1,2,2,3,4,4,5], print the unique elements.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "{1, 2, 3, 4, 5}",
+          "difficulty": "medium",
+          "topic": "Set Uniqueness"
+        },
+        {
+          "title": "Simple Class Counter",
+          "description": "Create a class Counter that starts at 0 and has an increment() method. Create one instance, increment 3 times, and print the count.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "3",
+          "difficulty": "medium",
+          "topic": "Simple Class Counter"
+        }
+      ]
+    },
+    {
+      "name": "Advanced Python",
+      "tasks": [
+        {
+          "title": "List Comprehension Filter",
+          "description": "Write a one-liner that creates a list of all even numbers from 0 to 20.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "[0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]",
+          "difficulty": "hard",
+          "topic": "List Comprehension Filter"
+        },
+        {
+          "title": "Lambda Sort",
+          "description": "Given a list of tuples [(1, 'b'), (3, 'a'), (2, 'c')], sort it by the string value.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "[(3, 'a'), (1, 'b'), (2, 'c')]",
+          "difficulty": "hard",
+          "topic": "Lambda Sort"
+        },
+        {
+          "title": "Exception Handling",
+          "description": "Write a program that divides two numbers and handles division by zero gracefully.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "Cannot divide by zero!",
+          "difficulty": "hard",
+          "topic": "Exception Handling"
+        },
+        {
+          "title": "Class and Object",
+          "description": "Create a class Person with a name attribute and a greet() method that prints 'Hi, I am <name>'.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "Hi, I am Alice",
+          "difficulty": "hard",
+          "topic": "Class and Object"
+        },
+        {
+          "title": "Decorators",
+          "description": "Write a decorator that prints 'Starting function' before calling the function.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "Starting function\nHello!",
+          "difficulty": "hard",
+          "topic": "Decorators"
+        },
+        {
+          "title": "Recursive Factorial",
+          "description": "Write a recursive function to calculate the factorial of 5.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "120",
+          "difficulty": "hard",
+          "topic": "Recursive Factorial"
+        },
+        {
+          "title": "Context Manager",
+          "description": "Use a with statement to open 'data.txt' and write 'Context Managed!'.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "File should contain: Context Managed!",
+          "difficulty": "hard",
+          "topic": "Context Manager"
+        },
+        {
+          "title": "Generators",
+          "description": "Create a generator function that yields squares of numbers from 0 to 5.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "0 1 4 9 16 25",
+          "difficulty": "hard",
+          "topic": "Generators"
+        },
+        {
+          "title": "List Flattening",
+          "description": "Flatten a nested list [[1, 2], [3, 4], [5]] to [1, 2, 3, 4, 5].",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "[1, 2, 3, 4, 5]",
+          "difficulty": "hard",
+          "topic": "List Flattening"
+        },
+        {
+          "title": "Multi-threading",
+          "description": "Create two threads that print 'Thread 1' and 'Thread 2' concurrently.",
+          "starter_code": "",
+          "expected_input": "",
+          "expected_output": "Thread 1\nThread 2",
+          "difficulty": "hard",
+          "topic": "Multi-threading"
+        }
+      ]
+    }
+  ]
+}

@@ -246,6 +246,7 @@ type TaskWithProgress struct {
 	ExpectedInput  string `json:"expected_input"`
 	ExpectedOutput string `json:"expected_output"`
 	Completed      bool   `json:"completed"`
+	CourseID       uint64 `json:"course_id"`
 }
 
 func GetTasksForCourse(courseID uint64, userID uint64) ([]TaskWithProgress, error) {
@@ -255,7 +256,8 @@ func GetTasksForCourse(courseID uint64, userID uint64) ([]TaskWithProgress, erro
 			EXISTS (
 				SELECT 1 FROM submissions s
 				WHERE s.user_id = ? AND s.task_id = t.id AND s.is_successful = 1
-			) AS completed
+			) AS completed,
+			t.course_id  -- 🆕 auch mit abfragen!
 		FROM tasks t
 		WHERE t.course_id = ?
 	`, userID, courseID)
@@ -268,8 +270,14 @@ func GetTasksForCourse(courseID uint64, userID uint64) ([]TaskWithProgress, erro
 	for rows.Next() {
 		var task TaskWithProgress
 		err := rows.Scan(
-			&task.ID, &task.Title, &task.Description, &task.StarterCode,
-			&task.ExpectedInput, &task.ExpectedOutput, &task.Completed,
+			&task.ID,
+			&task.Title,
+			&task.Description,
+			&task.StarterCode,
+			&task.ExpectedInput,
+			&task.ExpectedOutput,
+			&task.Completed,
+			&task.CourseID,
 		)
 		if err != nil {
 			return nil, err
@@ -290,6 +298,14 @@ type SubmissionInput struct {
 	Tip             *string `json:"tip,omitempty"`
 }
 
+var leftSide = ""
+var rightSide = ""
+var isCorrect = false
+var cleanedUserOutput = ""
+var cleanedExpectedOutputLeft = ""
+var cleanedExpectedOutputRight = ""
+var cleanedExpectedOutput = ""
+
 func SaveSubmissionAndUpdateProgress(input SubmissionInput) (uint64, error) {
 	log.Printf("💾 Submission verarbeiten für user_id=%d, task_id=%d", input.UserID, input.TaskID)
 
@@ -307,15 +323,30 @@ func SaveSubmissionAndUpdateProgress(input SubmissionInput) (uint64, error) {
 		log.Printf("❌ Fehler beim expected_output-Query: %v", err)
 		return 0, err
 	}
+	if strings.Contains(expectedOutput, "or") {
+		parts := strings.Split(expectedOutput, "or")
 
-	// 2. Output vergleichen
-	// 2. Output vergleichen
-	clean := func(s string) string {
-		return strings.TrimSpace(strings.ReplaceAll(s, "\r", ""))
+		leftSide = strings.TrimSpace(parts[0])
+		rightSide = strings.TrimSpace(parts[1])
+
+		clean := func(s string) string {
+			return strings.TrimSpace(strings.ReplaceAll(s, "\r", ""))
+		}
+		cleanedUserOutput := clean(input.Output)
+		cleanedExpectedOutputLeft := clean(leftSide)
+		cleanedExpectedOutputRight := clean(rightSide)
+		isCorrect = cleanedUserOutput == cleanedExpectedOutputLeft || cleanedUserOutput == cleanedExpectedOutputRight
 	}
-	cleanedUserOutput := clean(input.Output)
-	cleanedExpectedOutput := clean(expectedOutput)
-	isCorrect := cleanedUserOutput == cleanedExpectedOutput
+
+	if !isCorrect {
+		// 2. Output vergleichen
+		clean := func(s string) string {
+			return strings.TrimSpace(strings.ReplaceAll(s, "\r", ""))
+		}
+		cleanedUserOutput := clean(input.Output)
+		cleanedExpectedOutput := clean(expectedOutput)
+		isCorrect = cleanedUserOutput == cleanedExpectedOutput
+	}
 
 	// ➕ Logging hinzufügen
 	log.Printf("🔎 Vergleich Benutzer-Output vs. Erwartet:")
@@ -385,6 +416,7 @@ func SaveSubmissionAndUpdateProgress(input SubmissionInput) (uint64, error) {
 		}
 		submissionID = uint64(lastID)
 		log.Printf("📥 Submission-ID %d gespeichert", submissionID)
+		isCorrect = false
 	} else {
 		log.Printf("⚠️ Output falsch – nur Fortschritt wird gespeichert")
 	}

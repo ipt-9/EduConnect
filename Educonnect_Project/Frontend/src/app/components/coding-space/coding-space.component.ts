@@ -25,7 +25,7 @@ export class CodingSpaceComponent implements OnInit, AfterViewInit {
     }
 
     const storedTask = JSON.parse(rawTask);
-    const courseId = 1; // ggf. dynamisch machen
+    const courseId = localStorage.getItem("activeCourseId")
     const token = localStorage.getItem('token');
 
     if (!token) {

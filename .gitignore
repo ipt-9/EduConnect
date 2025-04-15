@@ -480,7 +480,7 @@ go.work.sum
 
 # env file
 .env
-Educonnect_Project/Backend/configuration.env.copy
+Educonnect_Project/Backend/configuration.env
 
 # JetBrains Rider
 *.sln.iml

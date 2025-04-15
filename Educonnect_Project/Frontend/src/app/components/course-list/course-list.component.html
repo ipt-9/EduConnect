@@ -39,10 +39,9 @@
     (click)="openCourse(course.id)"
   >
     <h3>
-      {{ course.programming_language }} {{ course.title || 'Getting Started' }}
+      {{ course.programming_language }} {{ course.topic }}
     </h3>
     <p>{{ course.description }}</p>
-
     <div class="status">
       <span *ngIf="course.completed" class="completed">Completed</span>
       <span *ngIf="!course.started" class="not-started">Not Started</span>
