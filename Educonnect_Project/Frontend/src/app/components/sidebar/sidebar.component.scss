@@ -3,9 +3,9 @@ $bg: #202020;
 $hover: #2c2c2c;
 $muted: #aaa;
 $toggle-bg: #2a2a2a;
-$highlight: #e0e0e0;
-$icon-muted: #888;
-$icon-hover: #fff;
+$highlight: #cccccc;  // Statt #e0e0e0, um den Kontrast zu reduzieren
+$icon-muted: #999;    // Etwas heller als #888
+$icon-hover: #ddd;    // Statt #fff
 $btn-hover-bg: #2e2e2e;
 $danger: #ff6b6b;
 $tooltip-bg: #2e2f39;
@@ -23,20 +23,21 @@ $tooltip-bg: #2e2f39;
 }
 
 .sidebar {
-  position: relative;
+  position: fixed;
   background-color: $bg;
-  top: 1rem;
+  top: 50%;         // Mittig auf der Y-Achse
+  transform: translateY(-50%);  // Perfekte Zentrierung
   left: 1rem;
-  bottom: 1rem;
   width: 80px;
+  height: 80%;      // Höhe begrenzen für bessere Proportion
   border-radius: 20px;
   padding: 1rem 0.5rem;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 999;
-  overflow: visible;
+  z-index: 1000;
+
 
   .nav-btn,
   .section-title,
@@ -190,7 +191,7 @@ $tooltip-bg: #2e2f39;
     pointer-events: auto;
   }
 
-  // === MAIN Section: white
+  // === MAIN Section: nicht mehr so starkes weiß
   .main-section .nav-btn {
     color: $highlight !important;
 
@@ -204,7 +205,7 @@ $tooltip-bg: #2e2f39;
     }
   }
 
-  // === SETTINGS + HELP: grey
+  // === SETTINGS + HELP: etwas helleres grau
   .nav-section:nth-of-type(2) .nav-btn,
   .bottom-nav .nav-btn:not(.logout) {
     color: $icon-muted;

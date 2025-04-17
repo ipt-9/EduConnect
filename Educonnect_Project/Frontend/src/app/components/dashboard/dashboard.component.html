@@ -1,0 +1,129 @@
+<!-- src/app/components/dashboard/dashboard.component.html -->
+<div class="dashboard-container">
+  <!-- Header -->
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
+    <!-- Main Dashboard -->
+    <main class="dashboard">
+      <div class="welcome-section">
+        <h2>Willkommen zurück, {{user.name.split(' ')[0]}}!</h2>
+        <p>Setze dein Lernen fort und erreiche deine Ziele.</p>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Continue Learning Section -->
+        <section class="continue-learning">
+          <h3>Weitermachen</h3>
+          <div class="course-card">
+            <img [src]="recentCourse.imageUrl" alt="Kursabdeckung">
+            <div class="course-info">
+              <h4>{{recentCourse.title}}</h4>
+              <p>Letzte Lektion: {{recentCourse.lastLesson}}</p>
+              <div class="progress-bar">
+                <div class="progress" [style.width.%]="recentCourse.progress"></div>
+              </div>
+              <span class="progress-text">{{recentCourse.progress}}% abgeschlossen</span>
+            </div>
+            <button class="primary-button">Fortsetzen</button>
+          </div>
+        </section>
+
+        <!-- Right side quick actions -->
+        <section class="quick-actions">
+          <h3>Schnellzugriff</h3>
+
+          <!-- Recent chat -->
+          <div class="action-card">
+            <div class="card-header">
+              <h4>Letzter Chat</h4>
+              <span class="view-all">Alle anzeigen</span>
+            </div>
+            <div class="chat-preview">
+              <div class="chat-icon">
+                <i class="fas fa-comment"></i>
+              </div>
+              <div class="chat-content">
+                <h5>{{recentChat.title}}</h5>
+                <p>{{recentChat.lastMessage}}</p>
+                <div class="chat-meta">
+                  <span>{{recentChat.time}}</span>
+                  <span class="unread-badge" *ngIf="recentChat.unread">{{recentChat.unread}}</span>
+                </div>
+              </div>
+            </div>
+            <button class="secondary-button">Zum Chat</button>
+          </div>
+
+          <!-- Learning path progress -->
+          <div class="action-card">
+            <div class="card-header">
+              <h4>Mein Lernpfad</h4>
+              <span class="view-all">Details</span>
+            </div>
+            <div class="path-preview">
+              <h5>{{learningPath.title}}</h5>
+              <div class="progress-bar">
+                <div class="progress" [style.width.%]="learningPath.progress"></div>
+              </div>
+              <p>Nächster Meilenstein: {{learningPath.nextMilestone}}</p>
+              <p class="modules-count">{{learningPath.completedModules}}/{{learningPath.totalModules}} Module abgeschlossen</p>
+            </div>
+            <button class="secondary-button">Fortfahren</button>
+          </div>
+        </section>
+
+        <!-- Recommended Courses -->
+        <section class="recommended-courses">
+          <h3>Empfohlene Kurse</h3>
+          <div class="courses-grid">
+            <div class="course-card" *ngFor="let course of recommendedCourses">
+              <img [src]="course.imageUrl" alt="Kursabdeckung">
+              <div class="course-details">
+                <h4>{{course.title}}</h4>
+                <div class="course-meta">
+                  <span><i class="fas fa-clock"></i> {{course.duration}}</span>
+                  <span><i class="fas fa-signal"></i> {{course.level}}</span>
+                </div>
+                <button class="outline-button">Kurs anzeigen</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Statistics Section -->
+        <section class="statistics">
+          <h3>Deine Statistiken</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-book"></i></div>
+              <div class="stat-content">
+                <h4>Kurse</h4>
+                <p class="stat-number">{{completedCourses}}/{{totalCourses}}</p>
+                <p class="stat-label">abgeschlossen</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-code"></i></div>
+              <div class="stat-content">
+                <h4>Übungen</h4>
+                <p class="stat-number">{{completedExercises}}/{{totalExercises}}</p>
+                <p class="stat-label">absolviert</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-fire"></i></div>
+              <div class="stat-content">
+                <h4>Streak</h4>
+                <p class="stat-number">{{currentStreak}}</p>
+                <p class="stat-label">Tage in Folge</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
