@@ -1,0 +1,625 @@
+/* src/app/components/dashboard/dashboard.component.scss */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+/* Globale Variablen - diese sollten eigentlich in eine separate _variables.scss Datei */
+$primary-color: #f1562f;
+$primary-light: #ff7d5c;
+$primary-dark: #d43e1c;
+$text-color: #333333;
+$text-secondary: #666666;
+$background-color: #ffffff;
+$background-secondary: #f8f9fa;
+$border-color: #e6e6e6;
+$success-color: #28a745;
+$warning-color: #ffc107;
+$danger-color: #dc3545;
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+$shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+$radius-sm: 0.25rem;
+$radius-md: 0.5rem;
+$radius-lg: 0.75rem;
+$transition: all 0.3s ease;
+
+/* Basis Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-container {
+  font-family: 'Inter', sans-serif;
+  color: $text-color;
+  background-color: $background-secondary;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header Styles */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background-color: $background-color;
+  box-shadow: $shadow-sm;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  img {
+    height: 2.5rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: $primary-color;
+    margin: 0;
+  }
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background-color: $gray-100;
+  border-radius: 2rem;
+  padding: 0.5rem 1rem;
+  width: 30%;
+
+  i {
+    color: $gray-500;
+    margin-right: 0.5rem;
+  }
+
+  input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    outline: none;
+    font-size: 0.9rem;
+
+    &::placeholder {
+      color: $gray-500;
+    }
+  }
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+
+  .notifications {
+    position: relative;
+
+    i {
+      font-size: 1.25rem;
+      color: $text-secondary;
+    }
+
+    .badge {
+      position: absolute;
+      top: -0.5rem;
+      right: -0.5rem;
+      background-color: $primary-color;
+      color: white;
+      font-size: 0.7rem;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+
+    img {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    span {
+      font-weight: 600;
+    }
+
+    i {
+      font-size: 0.8rem;
+      color: $text-secondary;
+    }
+  }
+}
+
+/* Content Wrapper Styles */
+.content-wrapper {
+  display: flex;
+  flex: 1;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  width: 250px;
+  background-color: $background-color;
+  padding: 2rem 0;
+  border-right: 1px solid $border-color;
+  display: flex;
+  flex-direction: column;
+
+  nav {
+    ul {
+      list-style: none;
+
+      li {
+        padding: 0.75rem 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: $text-secondary;
+        cursor: pointer;
+        transition: $transition;
+
+        i {
+          width: 1.25rem;
+        }
+
+        &:hover {
+          background-color: $gray-100;
+          color: $primary-color;
+        }
+
+        &.active {
+          background-color: $gray-100;
+          color: $primary-color;
+          border-left: 3px solid $primary-color;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .user-progress {
+    margin-top: auto;
+    padding: 1.5rem 2rem;
+    border-top: 1px solid $border-color;
+
+    h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .level-indicator {
+      margin-bottom: 1rem;
+
+      .level {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+      }
+
+      .progress-bar {
+        height: 0.5rem;
+        background-color: $gray-200;
+        border-radius: $radius-sm;
+        margin-bottom: 0.5rem;
+
+        .progress {
+          height: 100%;
+          background-color: $primary-color;
+          border-radius: $radius-sm;
+        }
+      }
+
+      .xp {
+        font-size: 0.8rem;
+        color: $text-secondary;
+      }
+    }
+
+    .streak {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: $warning-color;
+      font-weight: 600;
+      font-size: 0.9rem;
+
+      i {
+        font-size: 1.25rem;
+      }
+    }
+  }
+}
+
+/* Dashboard Styles */
+.dashboard {
+  flex: 1;
+  padding: 2rem;
+
+  .welcome-section {
+    margin-bottom: 2rem;
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      color: $text-secondary;
+    }
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    grid-template-areas:
+      "continue quick"
+      "recommended recommended"
+      "stats stats";
+    gap: 1.5rem;
+  }
+
+  section {
+    background-color: $background-color;
+    border-radius: $radius-md;
+    padding: 1.5rem;
+    box-shadow: $shadow-sm;
+
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      color: $text-color;
+    }
+  }
+
+  .continue-learning {
+    grid-area: continue;
+
+    .course-card {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+
+      img {
+        width: 120px;
+        height: 90px;
+        object-fit: cover;
+        border-radius: $radius-sm;
+      }
+
+      .course-info {
+        flex: 1;
+
+        h4 {
+          font-weight: 600;
+          margin-bottom: 0.25rem;
+        }
+
+        p {
+          color: $text-secondary;
+          font-size: 0.9rem;
+          margin-bottom: 0.75rem;
+        }
+
+        .progress-bar {
+          height: 0.5rem;
+          background-color: $gray-200;
+          border-radius: $radius-sm;
+          margin-bottom: 0.5rem;
+
+          .progress {
+            height: 100%;
+            background-color: $primary-color;
+            border-radius: $radius-sm;
+          }
+        }
+
+        .progress-text {
+          font-size: 0.8rem;
+          color: $text-secondary;
+        }
+      }
+    }
+  }
+
+  .quick-actions {
+    grid-area: quick;
+
+    .action-card {
+      background-color: $gray-100;
+      border-radius: $radius-md;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+
+        h4 {
+          font-weight: 600;
+          font-size: 1rem;
+        }
+
+        .view-all {
+          color: $primary-color;
+          font-size: 0.8rem;
+          font-weight: 600;
+          cursor: pointer;
+        }
+      }
+
+      .chat-preview {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+
+        .chat-icon {
+          width: 3rem;
+          height: 3rem;
+          background-color: $primary-light;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          i {
+            color: white;
+            font-size: 1.25rem;
+          }
+        }
+
+        .chat-content {
+          flex: 1;
+
+          h5 {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+          }
+
+          p {
+            color: $text-secondary;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+          }
+
+          .chat-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            span {
+              font-size: 0.8rem;
+              color: $text-secondary;
+            }
+
+            .unread-badge {
+              background-color: $primary-color;
+              color: white;
+              font-size: 0.7rem;
+              width: 1.25rem;
+              height: 1.25rem;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+          }
+        }
+      }
+
+      .path-preview {
+        margin-bottom: 1rem;
+
+        h5 {
+          font-weight: 600;
+          margin-bottom: 0.75rem;
+        }
+
+        .progress-bar {
+          height: 0.5rem;
+          background-color: $gray-200;
+          border-radius: $radius-sm;
+          margin-bottom: 0.75rem;
+
+          .progress {
+            height: 100%;
+            background-color: $primary-color;
+            border-radius: $radius-sm;
+          }
+        }
+
+        p {
+          color: $text-secondary;
+          font-size: 0.9rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .modules-count {
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+
+  .recommended-courses {
+    grid-area: recommended;
+
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+
+      .course-card {
+        background-color: $gray-100;
+        border-radius: $radius-md;
+        overflow: hidden;
+        transition: $transition;
+
+        &:hover {
+          transform: translateY(-5px);
+          box-shadow: $shadow-md;
+        }
+
+        img {
+          width: 100%;
+          height: 150px;
+          object-fit: cover;
+        }
+
+        .course-details {
+          padding: 1.25rem;
+
+          h4 {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+          }
+
+          .course-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+
+            span {
+              font-size: 0.8rem;
+              color: $text-secondary;
+              display: flex;
+              align-items: center;
+              gap: 0.25rem;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .statistics {
+    grid-area: stats;
+    margin-top: 1rem;
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+
+      .stat-card {
+        display: flex;
+        align-items: center;
+        background-color: $gray-100;
+        border-radius: $radius-md;
+        padding: 1.25rem;
+
+        .stat-icon {
+          width: 3rem;
+          height: 3rem;
+          background-color: $primary-light;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 1rem;
+
+          i {
+            color: white;
+            font-size: 1.25rem;
+          }
+        }
+
+        .stat-content {
+          h4 {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+          }
+
+          .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: $primary-color;
+            margin-bottom: 0;
+          }
+
+          .stat-label {
+            font-size: 0.8rem;
+            color: $text-secondary;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Button Styles */
+.primary-button {
+  background-color: $primary-color;
+  color: white;
+  border: none;
+  border-radius: $radius-md;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: $transition;
+
+  &:hover {
+    background-color: $primary-dark;
+  }
+}
+
+.secondary-button {
+  background-color: $gray-200;
+  color: $text-color;
+  border: none;
+  border-radius: $radius-md;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: $transition;
+
+  &:hover {
+    background-color: $gray-300;
+  }
+}
+
+.outline-button {
+  background-color: transparent;
+  color: $primary-color;
+  border: 1px solid $primary-color;
+  border-radius: $radius-md;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: $transition;
+
+  &:hover {
+    background-color: $primary-color;
+    color: white;
+  }
+}

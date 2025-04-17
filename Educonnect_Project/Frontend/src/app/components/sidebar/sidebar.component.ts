@@ -28,3 +28,4 @@ export class SidebarComponent {
     this.isExpanded = !this.isExpanded;
   }
 }
+
