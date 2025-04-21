@@ -11,11 +11,15 @@ import (
 	"strings"
 )
 
-func GetGroupNotificationsHandler(w http.ResponseWriter, r *http.Request) {
+func GetUserTipsForTaskHandler(w http.ResponseWriter, r *http.Request) {
 	EnableCORS(w)
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -36,7 +40,7 @@ func GetGroupNotificationsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 👤 user_id aus Claims lesen
+	// 👤 user_id aus Token
 	userIDFloat, ok := claims["user_id"].(float64)
 	if !ok {
 		http.Error(w, "Fehlende user_id im Token", http.StatusUnauthorized)
@@ -44,36 +48,24 @@ func GetGroupNotificationsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := uint64(userIDFloat)
 
-	// 📦 groupID aus URL-Parametern lesen
+	// 📦 taskID aus URL lesen
 	vars := mux.Vars(r)
-	groupIDStr := vars["groupID"]
-	groupID, err := strconv.ParseInt(groupIDStr, 10, 64)
+	taskIDStr := vars["taskID"]
+	taskID, err := strconv.ParseUint(taskIDStr, 10, 64)
 	if err != nil {
-		http.Error(w, "Ungültige Gruppen-ID", http.StatusBadRequest)
+		http.Error(w, "Ungültige taskID", http.StatusBadRequest)
 		return
 	}
 
-	// ✅ Ist User Mitglied der Gruppe?
-	isMember, err := DB.IsUserInGroup(groupID, userID)
+	// 🧠 Tipps aus DB holen
+	tips, err := DB.GetTipsForUserAndTask(userID, taskID)
 	if err != nil {
-		log.Println("❌ DB-Fehler bei Gruppenmitgliedschaft:", err)
-		http.Error(w, "Interner Serverfehler", http.StatusInternalServerError)
-		return
-	}
-	if !isMember {
-		http.Error(w, "Nicht berechtigt – kein Gruppenmitglied", http.StatusForbidden)
+		log.Println("❌ Fehler beim Laden der Tipps:", err)
+		http.Error(w, "Fehler beim Laden der Tipps", http.StatusInternalServerError)
 		return
 	}
 
-	// 📬 Notifications aus DB holen
-	notifications, err := DB.GetGroupNotifications(groupID)
-	if err != nil {
-		log.Println("❌ Fehler beim Laden der Notifications:", err)
-		http.Error(w, "Fehler beim Laden der Benachrichtigungen", http.StatusInternalServerError)
-		return
-	}
-
-	// ✅ Antwort senden
+	// ✅ Antwort
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(notifications)
+	json.NewEncoder(w).Encode(tips)
 }

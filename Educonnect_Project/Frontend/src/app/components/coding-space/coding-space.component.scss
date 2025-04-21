@@ -5,6 +5,8 @@ body {
   background: #111214;
   color: #fff;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .layout {
@@ -19,18 +21,19 @@ body {
   flex-direction: column;
   padding: 24px;
   gap: 20px;
-  background: #1b1c1e; /* dark background */
+  background: #1b1c1e;
 }
 
-/* === Editor Card === */
+/* === Editor & Compiler Cards === */
 .editor-card,
 .compiler-card {
   background: #232428;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: all 0.2s ease;
 }
 
 .editor-card {
@@ -46,8 +49,8 @@ body {
 .file-header {
   padding: 12px 16px;
   background: #1e1f23;
-  border-bottom: 1px solid #444;
-  font-weight: bold;
+  border-bottom: 1px solid #333;
+  font-weight: 500;
   color: #ccc;
   font-size: 0.95rem;
   display: flex;
@@ -60,7 +63,7 @@ body {
   display: flex;
   height: 100%;
   background: #1a1a1d;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 20px 20px;
   overflow: hidden;
 }
 
@@ -91,6 +94,7 @@ body {
   flex-wrap: wrap;
   align-items: flex-start;
   background: #1a1a1d;
+  border-left: 1px solid #2d2d2d;
 }
 
 #codeText {
@@ -113,18 +117,18 @@ body {
   margin-top: 10px;
   background: #121213;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #00ff95;
   font-family: 'Fira Code', monospace;
 }
 
-/* === Right Panel === */
+/* === Right Pane === */
 .right-pane {
   flex: 1;
   padding: 24px;
   overflow-y: auto;
-  background: #1b1c1e; /* match left side */
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  background: #1b1c1e;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
   color: white;
 }
 
@@ -132,6 +136,7 @@ body {
   margin-top: 0;
   font-weight: 600;
   color: #ffffff;
+  font-size: 1.4rem;
 }
 
 .right-pane code {
@@ -143,11 +148,12 @@ body {
 
 .right-pane pre {
   background: #121213;
-  color: white; /* ✅ text in dark box */
+  color: white;
   padding: 12px;
   border-radius: 10px;
   overflow-x: auto;
   font-size: 0.85rem;
+  font-family: 'Fira Code', monospace;
 }
 
 /* === Scrollbars === */
@@ -159,14 +165,22 @@ body {
   border-radius: 3px;
 }
 
-/* === Run Button === */
+/* === Timer === */
+.timer-display {
+  font-family: 'Fira Code', monospace;
+  color: #999;
+  font-size: 0.95rem;
+  margin: 8px 0 16px;
+}
+
+/* === Buttons (Apple Style) === */
 .run-btn {
   background: #007aff;
   border: none;
   color: white;
-  font-weight: bold;
-  padding: 4px 12px;
-  border-radius: 6px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background 0.3s ease;
 }
@@ -175,24 +189,24 @@ body {
   background: #005ad3;
 }
 
-.timer-display {
-  font-family: 'Fira Code', monospace;
-  color: #888;
+.submit-btn,
+.reset-btn,
+.back-btn {
+  font-family: -apple-system, BlinkMacSystemFont, 'Fira Code', monospace;
   font-size: 0.95rem;
-  margin-bottom: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  border: none;
+  width: 100%;
+  margin-top: 10px;
+  transition: all 0.2s ease;
 }
+
 .submit-btn {
-  font-family: 'Fira Code', monospace;
-  font-size: 0.95rem;
-  padding: 8px 16px;
   background-color: #00cc88;
   color: #000;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  width: 100%;
-  font-weight: bold;
-  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .submit-btn:hover {
@@ -201,37 +215,207 @@ body {
 }
 
 .reset-btn {
-  font-family: 'Fira Code', monospace;
-  font-size: 0.9rem;
-  padding: 6px 14px;
-  background-color: #ff4444;
+  background-color: #ff3b30;
   color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .reset-btn:hover {
-  background-color: #e63636;
-  transform: scale(1.03);
+  background-color: #e3342f;
+  transform: scale(1.02);
 }
 
 .back-btn {
-  font-family: 'Fira Code', monospace;
-  font-size: 0.9rem;
-  padding: 6px 14px;
-  background-color: #3366ff;
+  background-color: #007aff;
   color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .back-btn:hover {
-  background-color: #2a57e0;
-  transform: scale(1.03);
+  background-color: #005ad3;
+  transform: scale(1.02);
+}
+
+/* === Status Badges & Banner === */
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.status-badge {
+  background-color: #00cc88;
+  color: black;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: 100px;
+  box-shadow: 0 0 0 2px #00cc88aa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Fira Code', monospace;
+}
+
+.task-banner {
+  background: linear-gradient(to right, #00cc88, #00e49f);
+  color: black;
+  text-align: center;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0, 204, 136, 0.2);
+}
+/* === Popup === */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(17, 17, 17, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.popup-card {
+  background: #1f1f1f;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  width: 300px;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Fira Code', monospace;
+}
+
+.popup-card h3 {
+  margin-top: 0;
+  color: #00cc88;
+  font-size: 1.2rem;
+}
+
+.popup-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-around;
+}
+
+.popup-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.popup-btn.confirm {
+  background: #00cc88;
+  color: black;
+}
+
+.popup-btn.cancel {
+  background: #ff3b30;
+  color: white;
+}
+
+.popup-btn:hover {
+  transform: scale(1.05);
+}
+.tip-box {
+  background: #121213;
+  color: #ffffff;
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-family: 'Fira Code', monospace;
+  line-height: 1.5;
+  box-shadow: 0 4px 20px rgba(0, 204, 136, 0.15);
+  border-left: 4px solid #00cc88;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-tip {
+  animation: fadeInScale 0.4s ease-out forwards;
+}
+
+.tip-box.animate-in {
+  animation: slideFadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tip-history {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #1e1f22;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.tip-history h3 {
+  margin-bottom: 16px;
+  font-size: 1.05rem;
+  color: #00cc88;
+  font-weight: 600;
+}
+
+.tip-entry {
+  padding: 12px;
+  border-radius: 12px;
+  background: #121213;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  border-left: 4px solid #00cc88;
+}
+
+.tip-entry:hover {
+  background: #1a1b1e;
+}
+
+.tip-title {
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+}
+
+.tip-content {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #ccc;
+  animation: slideFadeIn 0.3s ease-out;
+}
+
+.arrow {
+  transition: transform 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.arrow.expanded {
+  transform: rotate(180deg);
 }

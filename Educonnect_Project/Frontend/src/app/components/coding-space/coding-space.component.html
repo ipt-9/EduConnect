@@ -1,20 +1,53 @@
   <div class="layout" *ngIf="task">
-    <!-- Left Panel -->
+    <!-- ✅ Popup: Aufgabe wurde bereits erledigt -->
+    <div *ngIf="showAlreadyCompletedPopup" class="popup-overlay">
+      <div class="popup-card">
+        <h3>Aufgabe bereits erledigt</h3>
+        <p>Möchtest du den Code trotzdem nochmal ausführen?</p>
+        <div class="popup-buttons">
+          <button class="popup-btn cancel" (click)="closePopup()">Abbrechen</button>
+          <button class="popup-btn confirm" (click)="runAnyway()">Trotzdem ausführen</button>
+        </div>
+      </div>
+    </div>
+    <!-- 💡 Tipp-Popup nach Submit -->
+    <div *ngIf="showTipPopup" class="popup-overlay">
+      <div class="popup-card animate-tip">
+        <h3>💡 Verbesserungstipp</h3>
+        <p>{{ tipContent }}</p>
+        <div class="popup-buttons">
+          <button class="popup-btn confirm" (click)="acknowledgeTip()">Okay</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ❌ Popup: Aufgabe darf nicht 2× eingereicht werden -->
+    <div *ngIf="showSubmitBlockedPopup" class="popup-overlay">
+      <div class="popup-card">
+        <h3>⛔️ Bereits abgegeben</h3>
+        <p>Diese Aufgabe wurde bereits erfolgreich gelöst und kann nicht erneut eingereicht werden.</p>
+        <div class="popup-buttons">
+          <button class="popup-btn confirm" (click)="closePopup()">Verstanden</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🧠 Left Panel – Code Editor & Output -->
     <div class="left-pane">
       <div class="editor-card">
         <div class="file-header">
-          file.py
+          <span>file.py</span>
           <button id="runBtn" class="run-btn">▶ Run</button>
         </div>
         <div class="editor-wrapper">
           <div class="line-numbers" id="lineNumbers">1</div>
           <div class="code-area" id="codeArea">
-      <span id="codeText" contenteditable="true" spellcheck="false">
-        <ng-container *ngIf="!isLoadingCode; else loadingCode">
-          <!-- Code wird später durch innerText eingesetzt -->
-        </ng-container>
-        <ng-template #loadingCode>🕓 Code wird geladen…</ng-template>
-      </span>
+            <span id="codeText" contenteditable="true" spellcheck="false">
+              <ng-container *ngIf="!isLoadingCode; else loadingCode">
+                <!-- Code wird dynamisch gesetzt -->
+              </ng-container>
+              <ng-template #loadingCode> Code wird geladen…</ng-template>
+            </span>
             <span id="ghost" class="ghost"></span>
           </div>
         </div>
@@ -24,22 +57,32 @@
         <h4>🛠 Compiler Output</h4>
         <div class="output">✨ Compilation successful.</div>
 
-        <button class="submit-btn" (click)="submitSolution()">📤 Aufgabe abgeben</button>
-      </div>
-      <div *ngIf="submitMessage" [ngStyle]="{
-      color: submitSuccess ? '#00cc88' : '#ff4d4d',
-      fontWeight: 'bold',
-      marginTop: '12px',
-      fontSize: '0.95rem'
-      }">
-        {{ submitMessage }}
-      </div>
+        <button class="submit-btn" (click)="submitSolution()">Aufgabe abgeben</button>
 
+        <div *ngIf="submitMessage" [ngStyle]="{
+          color: submitSuccess ? '#00cc88' : '#ff4d4d',
+          fontWeight: 'bold',
+          marginTop: '12px',
+          fontSize: '0.95rem'
+        }">
+          {{ submitMessage }}
+        </div>
+      </div>
     </div>
 
-    <!-- Right Panel -->
+    <!-- 📄 Right Panel – Task Info -->
     <div class="right-pane glass">
-      <h2>📄 Problem: {{ task.title }}</h2>
+      <div class="task-header">
+        <h2>📄 {{ task.title }}</h2>
+        <div *ngIf="task?.completed" class="status-badge">
+          Erledigt
+        </div>
+      </div>
+
+      <div *ngIf="task?.completed" class="task-banner">
+        Diese Aufgabe wurde bereits erfolgreich gelöst!
+      </div>
+
       <p>{{ task.description }}</p>
 
       <pre *ngIf="task.expected_input">
@@ -56,26 +99,52 @@
       <ul *ngIf="task.constraints">
         <li *ngFor="let c of task.constraints">{{ c }}</li>
       </ul>
+
       <div class="timer-display">
         ⏱ Bearbeitungszeit: {{ formattedTime }}
       </div>
 
-      <!-- Reset-Button nur anzeigen, wenn nicht erfolgreich gelöst -->
-      <button 
-        *ngIf="!task?.is_successful"
+      <button
+        *ngIf="!task?.completed"
         (click)="resetTimer()"
         class="reset-btn"
       >
         ⏮ Zurücksetzen
       </button>
 
-      <!-- Zurück zu Aufgabenliste Button -->
       <button
         (click)="goBackToTasks()"
         class="back-btn"
       >
-        ⬅️ Zurück zur Aufgabenliste
+        Zurück zur Aufgabenliste
       </button>
+      <!-- 💡 Tippverlauf -->
+      <div class="tip-history glass" style="margin-top: 24px;">
+        <h3>💡 Deine bisherigen Hinweise</h3>
+
+        <div *ngIf="userTipsDetailed.length > 0; else noTipsYet">
+          <div
+            *ngFor="let tip of userTipsDetailed"
+            class="tip-entry"
+            (click)="toggleTip(tip)">
+
+            <div class="tip-title">
+              {{ tip.title }}
+              <span class="arrow" [class.expanded]="tip.expanded">▼</span>
+            </div>
+
+            <div *ngIf="tip.expanded" class="tip-content animate-in">
+              {{ tip.text }}
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noTipsYet>
+          <p style="color: #888; margin-top: 6px;">
+            Du hast bisher noch keine Tipps erhalten. Sobald du eine falsche Lösung einreichst, erscheinen hier automatisch Hinweise.
+          </p>
+        </ng-template>
+      </div>
 
     </div>
   </div>

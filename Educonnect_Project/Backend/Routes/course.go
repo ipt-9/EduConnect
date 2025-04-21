@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/ipt-9/EduConnect/DB"
+	"github.com/ipt-9/EduConnect/Tip"
 	"log"
 	"net/http"
 	"strconv"
@@ -14,7 +15,7 @@ import (
 )
 
 func GetMyCourses(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
+	EnableCORS(w)
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -56,7 +57,7 @@ func GetMyCourses(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(courses)
 }
 func GetTasksByCourse(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
+	EnableCORS(w)
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -111,9 +112,8 @@ func GetTasksByCourse(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tasks)
 }
 func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
+	EnableCORS(w)
 
-	// Preflight
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -123,7 +123,6 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 🔐 Bearer Token prüfen
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		http.Error(w, "Authorization Header fehlt", http.StatusUnauthorized)
@@ -140,21 +139,18 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 🧠 User ID laden
 	userID, err := DB.GetUserIDByEmail(claims.Email)
 	if err != nil {
 		http.Error(w, "Benutzer nicht gefunden", http.StatusInternalServerError)
 		return
 	}
 
-	// 🧾 Body parsen
 	var input DB.SubmissionInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		http.Error(w, "Ungültiges JSON", http.StatusBadRequest)
 		return
 	}
 
-	// ✅ Code darf nicht leer sein
 	if strings.TrimSpace(input.Code) == "" {
 		http.Error(w, "Code darf nicht leer sein", http.StatusBadRequest)
 		return
@@ -162,34 +158,80 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 
 	input.UserID = userID
 
-	// 💾 Lösung speichern + Fortschritt aktualisieren
-	subID, err := DB.SaveSubmissionAndUpdateProgress(input)
+	// 💾 Bewertung & Speichern
+	subID, isCorrect, _, err := DB.SaveSubmissionAndUpdateProgress(input)
 	if err != nil {
 		http.Error(w, "Fehler beim Speichern der Lösung", http.StatusInternalServerError)
 		return
 	}
 
-	success := subID != 0
+	log.Printf("📊 isCorrect: %v", isCorrect)
+	log.Printf("📊 subID:     %d", subID)
 
-	// ✅ Benachrichtigung nur bei Erfolg
+	success := isCorrect
+
+	var generatedTip string
+
+	// 💡 Nur bei falscher Lösung: Tipp-Logik
+	if !success {
+		task, err := DB.GetTaskByID(input.TaskID)
+		if err != nil {
+			http.Error(w, "Aufgabe nicht gefunden", http.StatusNotFound)
+			return
+		}
+
+		existingTip, err := DB.GetTipByTaskAndOutput(input.TaskID, input.Output)
+		if err != nil {
+			log.Println("⚠️ Fehler beim Nachschauen von vorhandenem Tipp:", err)
+		}
+
+		if existingTip != "" {
+			generatedTip = existingTip
+			go func() {
+				if err := DB.SaveUserTipUsage(userID, input.TaskID, existingTip); err != nil {
+					log.Println("❌ Fehler beim Speichern in user_tip_usage:", err)
+				}
+			}()
+		} else {
+			// 🪄 Gemini-Tipp generieren
+			prompt := Tip.BuildGeminiPrompt(task, input.Code, task.ExpectedOutput, input.Output)
+			generatedTip, err = Tip.FetchTipFromGemini(prompt)
+			if err != nil {
+				log.Println("❌ Fehler bei Tipp-Generierung:", err)
+				generatedTip = "Leider konnte kein Tipp generiert werden."
+			}
+
+			errorType := Tip.DetectErrorType(input.Output, isCorrect)
+			errorToken := Tip.ExtractErrorToken(input.Output)
+
+			go func() {
+				if err := DB.SaveGeneratedTip(input.TaskID, errorToken, generatedTip, errorType); err != nil {
+					log.Println("❌ Fehler beim Speichern des Tipps:", err)
+					return
+				}
+				if err := DB.SaveUserTipUsage(userID, input.TaskID, generatedTip); err != nil {
+					log.Println("❌ Fehler beim Speichern in user_tip_usage:", err)
+				}
+			}()
+		}
+	}
+
+	// ✅ Erfolgsfall: Gruppen-Notification
 	if success {
 		log.Println("✅ Aufgabe erfolgreich abgeschlossen – starte Notification-Logik")
 
-		// Titel der Aufgabe laden
 		taskTitle, err := DB.GetTaskTitleByID(input.TaskID)
 		if err != nil {
 			log.Println("⚠️ Konnte Aufgabentitel nicht laden:", err)
 			taskTitle = "Unbekannte Aufgabe"
 		}
 
-		// Username laden
 		username, err := DB.GetUsernameByID(userID)
 		if err != nil {
 			log.Println("⚠️ Konnte Username nicht laden:", err)
 			username = "Ein Mitglied"
 		}
 
-		// Gruppen-IDs laden
 		groupIDs, err := DB.GetGroupIDsForUser(userID)
 		if err != nil {
 			log.Println("⚠️ Konnte Gruppen nicht laden:", err)
@@ -206,16 +248,23 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// 🔁 Antwort senden
+	// 📤 Antwort
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	resp := map[string]interface{}{
 		"submission_id": subID,
 		"success":       success,
-	})
+	}
+
+	// Nur bei Fehler & vorhandenem Tipp
+	if !success && generatedTip != "" {
+		resp["tip"] = generatedTip
+	}
+
+	json.NewEncoder(w).Encode(resp)
 }
 
 func GetSubmittedCode(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
+	EnableCORS(w)
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)

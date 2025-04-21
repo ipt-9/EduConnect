@@ -8,6 +8,7 @@ import (
 	"log"
 	"strings"
 	"time"
+	"unicode"
 )
 
 var DB *sql.DB
@@ -171,25 +172,63 @@ func GetUserByEmail(email string) (User, error) {
 
 	return user, nil
 }
-func AssignDefaultCourseToUser(userID uint64) error {
-	log.Printf("📥 Versuche Kurs 1 user_id=%d zuzuweisen...", userID)
+func AssignAllCoursesToUser(userID uint64) error {
+	log.Printf("📥 Versuche, alle Kurse user_id=%d zuzuweisen...", userID)
 
-	result, err := DB.Exec(`
-		INSERT INTO user_courses (user_id, course_id)
-		VALUES (?, 1)
-	`, userID)
+	// Alle Kurs-IDs aus der Datenbank holen
+	rows, err := DB.Query(`SELECT id FROM courses`)
 	if err != nil {
-		log.Printf("❌ SQL-Fehler beim Zuweisen des Kurses: %v", err)
+		log.Printf("❌ Fehler beim Abrufen der Kurse: %v", err)
+		return err
+	}
+	defer rows.Close()
+
+	var courseIDs []uint64
+	for rows.Next() {
+		var id uint64
+		if err := rows.Scan(&id); err != nil {
+			log.Printf("❌ Fehler beim Lesen der Kurs-ID: %v", err)
+			return err
+		}
+		courseIDs = append(courseIDs, id)
+	}
+
+	// Frühzeitiger Exit, falls keine Kurse vorhanden sind
+	if len(courseIDs) == 0 {
+		log.Println("ℹ️ Keine Kurse gefunden – keine Zuweisung vorgenommen.")
+		return nil
+	}
+
+	// Mehrere INSERTS vorbereiten
+	tx, err := DB.Begin()
+	if err != nil {
+		log.Printf("❌ Fehler beim Starten der Transaktion: %v", err)
+		return err
+	}
+	stmt, err := tx.Prepare(`INSERT INTO user_courses (user_id, course_id) VALUES (?, ?)`)
+	if err != nil {
+		log.Printf("❌ Fehler beim Vorbereiten des Statements: %v", err)
+		return err
+	}
+	defer stmt.Close()
+
+	var inserted int64
+	for _, courseID := range courseIDs {
+		result, err := stmt.Exec(userID, courseID)
+		if err != nil {
+			log.Printf("⚠️ Fehler beim Einfügen (user_id=%d, course_id=%d): %v", userID, courseID, err)
+			continue
+		}
+		rowsAffected, _ := result.RowsAffected()
+		inserted += rowsAffected
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("❌ Fehler beim Commit: %v", err)
 		return err
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		log.Printf("❓ RowsAffected konnte nicht gelesen werden: %v", err)
-	} else {
-		log.Printf("📌 Kurs-Zuweisung: %d Zeile(n) eingefügt", rows)
-	}
-
+	log.Printf("✅ Erfolgreich %d Kurse für user_id=%d zugewiesen.", inserted, userID)
 	return nil
 }
 
@@ -298,65 +337,65 @@ type SubmissionInput struct {
 	Tip             *string `json:"tip,omitempty"`
 }
 
-var leftSide = ""
-var rightSide = ""
-var isCorrect = false
-var cleanedUserOutput = ""
-var cleanedExpectedOutputLeft = ""
-var cleanedExpectedOutputRight = ""
-var cleanedExpectedOutput = ""
-
-func SaveSubmissionAndUpdateProgress(input SubmissionInput) (uint64, error) {
+func SaveSubmissionAndUpdateProgress(input SubmissionInput) (uint64, bool, error, error) {
 	log.Printf("💾 Submission verarbeiten für user_id=%d, task_id=%d", input.UserID, input.TaskID)
 
 	tx, err := DB.Begin()
 	if err != nil {
 		log.Printf("❌ Fehler bei Transaktionsstart: %v", err)
-		return 0, err
+		return 0, false, err, nil
 	}
 	defer tx.Rollback()
 
-	// 1. expected_output abrufen
 	var expectedOutput string
 	err = tx.QueryRow(`SELECT expected_output FROM tasks WHERE id = ?`, input.TaskID).Scan(&expectedOutput)
 	if err != nil {
 		log.Printf("❌ Fehler beim expected_output-Query: %v", err)
-		return 0, err
+		return 0, false, err, nil
 	}
-	if strings.Contains(expectedOutput, "or") {
+
+	// 🧽 Robuste Clean-Funktion
+	clean := func(s string) string {
+		s = strings.ReplaceAll(s, "\r\n", "\n")
+		s = strings.ReplaceAll(s, "\r", "\n")
+		s = strings.ReplaceAll(s, "\ufeff", "") // BOM
+		s = strings.ReplaceAll(s, "\u200B", "") // Zero-width
+		s = strings.Map(func(r rune) rune {
+			if unicode.IsControl(r) && r != '\n' && r != '\t' {
+				return -1
+			}
+			return r
+		}, s)
+		lines := strings.Split(s, "\n")
+		for i := range lines {
+			lines[i] = strings.TrimSpace(lines[i])
+		}
+		return strings.TrimSpace(strings.Join(lines, "\n"))
+	}
+
+	cleanedUserOutput := clean(input.Output)
+	cleanedExpectedOutput := clean(expectedOutput)
+
+	// 📊 Vergleich
+	isCorrect := false
+	if strings.Contains(" "+expectedOutput+" ", " or ") {
 		parts := strings.Split(expectedOutput, "or")
-
-		leftSide = strings.TrimSpace(parts[0])
-		rightSide = strings.TrimSpace(parts[1])
-
-		clean := func(s string) string {
-			return strings.TrimSpace(strings.ReplaceAll(s, "\r", ""))
-		}
-		cleanedUserOutput := clean(input.Output)
-		cleanedExpectedOutputLeft := clean(leftSide)
-		cleanedExpectedOutputRight := clean(rightSide)
-		isCorrect = cleanedUserOutput == cleanedExpectedOutputLeft || cleanedUserOutput == cleanedExpectedOutputRight
-	}
-
-	if !isCorrect {
-		// 2. Output vergleichen
-		clean := func(s string) string {
-			return strings.TrimSpace(strings.ReplaceAll(s, "\r", ""))
-		}
-		cleanedUserOutput := clean(input.Output)
-		cleanedExpectedOutput := clean(expectedOutput)
+		leftSide := clean(parts[0])
+		rightSide := clean(parts[1])
+		isCorrect = cleanedUserOutput == leftSide || cleanedUserOutput == rightSide
+	} else {
 		isCorrect = cleanedUserOutput == cleanedExpectedOutput
 	}
 
-	// ➕ Logging hinzufügen
-	log.Printf("🔎 Vergleich Benutzer-Output vs. Erwartet:")
-	log.Printf("   👉 Benutzer:  '%s'", cleanedUserOutput)
-	log.Printf("   ✅ Erwartet: '%s'", cleanedExpectedOutput)
-	log.Printf("   📊 Ergebnis: %v", isCorrect)
+	// 📋 Debug-Ausgabe
+	log.Printf("📤 Raw Benutzeroutput: %s", input.Output)
+	log.Printf("📤 Cleaned Benutzeroutput: %q", cleanedUserOutput)
+	log.Printf("🎯 Cleaned Erwartet: %q", cleanedExpectedOutput)
+	log.Printf("📦 Bytes Benutzer:  %v", []byte(cleanedUserOutput))
+	log.Printf("📦 Bytes Erwartet: %v", []byte(cleanedExpectedOutput))
+	log.Printf("📊 Ergebnis: %v", isCorrect)
 
 	var submissionID uint64 = 0
-
-	// 3. Submission speichern, aber nur bei Erfolg
 	if isCorrect {
 		log.Printf("✅ Output korrekt – Submission wird gespeichert")
 
@@ -367,120 +406,96 @@ func SaveSubmissionAndUpdateProgress(input SubmissionInput) (uint64, error) {
 		`)
 		if err != nil {
 			log.Printf("❌ Fehler bei Prepare: %v", err)
-			return 0, err
+			return 0, false, err, nil
 		}
 		defer stmt.Close()
 
-		// Optional-Felder behandeln
 		var errMsg interface{}
 		if input.ErrorMessage != nil {
 			errMsg = *input.ErrorMessage
-		} else {
-			errMsg = nil
 		}
-
 		var execTime interface{}
 		if input.ExecutionTimeMs != nil {
 			execTime = *input.ExecutionTimeMs
-		} else {
-			execTime = nil
 		}
-
 		var tip interface{}
 		if input.Tip != nil {
 			tip = *input.Tip
-		} else {
-			tip = nil
 		}
 
 		res, err := stmt.Exec(
-			input.UserID,
-			input.TaskID,
-			input.Code,
-			time.Now(),
-			true,
-			input.Output,
-			errMsg,
-			execTime,
-			tip,
+			input.UserID, input.TaskID, input.Code, time.Now(), true,
+			input.Output, errMsg, execTime, tip,
 		)
 		if err != nil {
 			log.Printf("❌ Fehler bei Insert Submission: %v", err)
-			return 0, err
+			return 0, false, err, nil
 		}
-
 		lastID, err := res.LastInsertId()
 		if err != nil {
 			log.Printf("❌ Fehler bei LastInsertId: %v", err)
-			return 0, err
+			return 0, false, err, nil
 		}
 		submissionID = uint64(lastID)
 		log.Printf("📥 Submission-ID %d gespeichert", submissionID)
-		isCorrect = false
 	} else {
 		log.Printf("⚠️ Output falsch – nur Fortschritt wird gespeichert")
 	}
 
-	// 4. Fortschritt aktualisieren oder anlegen (immer)
+	// 🧠 Fortschritt aktualisieren
 	var usedHint bool
 	if input.UsedHint != nil {
 		usedHint = *input.UsedHint
-	} else {
-		usedHint = false
 	}
 
 	var progressID uint64
-	err = tx.QueryRow(`
-		SELECT id FROM user_task_progress 
-		WHERE user_id = ? AND task_id = ?
-	`, input.UserID, input.TaskID).Scan(&progressID)
+	err = tx.QueryRow(`SELECT id FROM user_task_progress WHERE user_id = ? AND task_id = ?`,
+		input.UserID, input.TaskID).Scan(&progressID)
 
 	if err == sql.ErrNoRows {
 		log.Printf("ℹ️ Kein Fortschritt gefunden → neuer Eintrag")
 		_, err = tx.Exec(`
-	INSERT INTO user_task_progress 
-	(user_id, task_id, completed, last_submission_id, used_hint, last_attempt_code) 
-	VALUES (?, ?, ?, ?, ?, ?)
-`, input.UserID, input.TaskID, isCorrect,
+			INSERT INTO user_task_progress 
+			(user_id, task_id, completed, last_submission_id, used_hint, last_attempt_code) 
+			VALUES (?, ?, ?, ?, ?, ?)
+		`, input.UserID, input.TaskID, isCorrect,
 			sql.NullInt64{Int64: int64(submissionID), Valid: submissionID != 0},
 			usedHint,
-			input.Code, // neuer Wert hier
+			input.Code,
 		)
-
 		if err != nil {
 			log.Printf("❌ Fehler bei Insert user_task_progress: %v", err)
-			return 0, err
+			return 0, isCorrect, err, nil
 		}
 	} else if err == nil {
 		log.Printf("🔄 Bestehender Fortschritt wird aktualisiert")
 		_, err = tx.Exec(`
-	UPDATE user_task_progress 
-	SET completed = ?, last_submission_id = ?, used_hint = ?, last_attempt_code = ? 
-	WHERE user_id = ? AND task_id = ?
-`, isCorrect,
+			UPDATE user_task_progress 
+			SET completed = ?, last_submission_id = ?, used_hint = ?, last_attempt_code = ? 
+			WHERE user_id = ? AND task_id = ?
+		`, isCorrect,
 			sql.NullInt64{Int64: int64(submissionID), Valid: submissionID != 0},
 			usedHint,
-			input.Code, // neuer Wert hier
+			input.Code,
 			input.UserID,
 			input.TaskID,
 		)
 		if err != nil {
 			log.Printf("❌ Fehler bei Update user_task_progress: %v", err)
-			return 0, err
+			return 0, isCorrect, err, nil
 		}
 	} else {
 		log.Printf("❌ Fehler beim Prüfen von user_task_progress: %v", err)
-		return 0, err
+		return 0, isCorrect, err, nil
 	}
 
-	// 5. Commit & fertig
 	if err := tx.Commit(); err != nil {
 		log.Printf("❌ Fehler beim Commit: %v", err)
-		return 0, err
+		return 0, isCorrect, err, nil
 	}
 
 	log.Printf("✅ Fortschritt gespeichert (submission_id: %d)", submissionID)
-	return submissionID, nil
+	return submissionID, isCorrect, nil, nil
 }
 
 func GetSubmittedCodeForTask(userID, taskID uint64) (string, error) {
