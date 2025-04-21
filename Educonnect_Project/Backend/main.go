@@ -35,6 +35,7 @@ func main() {
 	r.HandleFunc("/courses/{id}/tasks", routes.GetTasksByCourse).Methods("GET", "OPTIONS")
 	r.HandleFunc("/submit", routes.SubmitTaskSolution).Methods("POST", "OPTIONS")
 	r.HandleFunc("/tasks/{task_id}/submitted-code", routes.GetSubmittedCode).Methods("GET", "OPTIONS")
+	r.HandleFunc("/tasks/{taskID}/tips", routes.GetUserTipsForTaskHandler).Methods("GET", "OPTIONS")
 
 	r.HandleFunc("/groups", routes.GetUserGroupsHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/groups", routes.CreateGroupHandler).Methods("POST", "OPTIONS")

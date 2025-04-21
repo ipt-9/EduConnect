@@ -30,14 +30,14 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func enableCORS(w http.ResponseWriter) {
+func EnableCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
+	EnableCORS(w)
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -90,8 +90,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("🧠 Benutzer-ID gefunden: %d", userID)
 
-	// 🧠 Standardkurs ("Basic Python" mit id = 1) automatisch zuweisen
-	if err := DB.AssignDefaultCourseToUser(userID); err != nil {
+	// 🧠 Standardkurs
+	if err := DB.AssignAllCoursesToUser(userID); err != nil {
 		http.Error(w, "Fehler beim automatischen Zuweisen des Kurses", http.StatusInternalServerError)
 		return
 	}
@@ -101,7 +101,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
+	EnableCORS(w)
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -138,7 +138,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Protected(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
+	EnableCORS(w)
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -166,7 +166,7 @@ func Protected(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
+	EnableCORS(w)
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -200,7 +200,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func Verify2FA(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
+	EnableCORS(w)
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -270,7 +270,7 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 }
 
 func Me(w http.ResponseWriter, r *http.Request) {
-	enableCORS(w)
+	EnableCORS(w)
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
