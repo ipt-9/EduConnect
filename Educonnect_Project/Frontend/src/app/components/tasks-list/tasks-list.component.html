@@ -1,42 +1,35 @@
-<!-- Header wie bei courselist -->
-<div class="course-header">
-  <h1>Tasks</h1>
-  <h2>discover <strong>free</strong> courses from <span class="highlight">EduConnect</span></h2>
-</div>
-<button class="back-button" (click)="goBack()">← Get back to Courses</button>
-<!-- Schwarzer Aufgaben-Header -->
-<div class="task-header-box">
-  <div class="task-info">
-    <div class="task-icon">📦</div>
-    <div>
-      <h3>Basics</h3>
-      <p>6/6</p>
-    </div>
-  </div>
-  <button class="view-tasks-btn">View Tasks</button>
-</div>
+<div class="content-wrapper">
+  <app-sidebar></app-sidebar>
 
-<!-- Aufgabenliste -->
-<div class="task-list">
-  <div class="task-card" *ngFor="let task of tasks" (click)="openTask(task)">
-    <div class="task-main">
-      <div class="task-title">{{ task.title }}</div>
-      <div class="task-desc">{{ task.description }}</div>
-    </div>
-    <div class="task-actions">
-      <span class="task-status">
-        <ng-container *ngIf="task.completed; else notDone">✅</ng-container>
-        <ng-template #notDone>⏳</ng-template>
-      </span>
-      <button class="btn edit">Edit</button>
-      <button class="btn submit">Submit</button>
-      <span *ngIf="task.difficulty" class="difficulty-badge" [ngClass]="task.difficulty">
-        {{ task.difficulty | titlecase }}
-      </span>
-    </div>
-  </div>
-</div>
+  <main class="task-dashboard">
+    <div class="task-container">
+      <h2>Aufgabenübersicht</h2>
 
-<ng-template #loading>
-  <p>⏳ Lade Aufgaben...</p>
-</ng-template>
+      <div class="task-card" *ngFor="let task of tasks" [class.completed]="task.completed" (click)="toggleDescription(task)">
+        <div class="task-header">
+          <div class="title-status">
+            <h3>{{ task.title }}</h3>
+            <span class="status">
+              <i class="fas" [ngClass]="task.completed ? 'fa-check-circle' : 'fa-hourglass-half'"></i>
+              <ng-container *ngIf="task.completed; else inProgress">Abgeschlossen</ng-container>
+              <ng-template #inProgress>In Bearbeitung</ng-template>
+            </span>
+          </div>
+          <i class="fas fa-chevron-down toggle-icon" [class.rotate]="task.expanded"></i>
+        </div>
+
+        <div class="description-preview" [class.expanded]="task.expanded">
+          {{ task.description }}
+
+          <button
+            class="open-task-btn"
+            *ngIf="task.expanded"
+            (click)="openTask(task); $event.stopPropagation()"
+          >
+            Im Editor öffnen
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

@@ -3,13 +3,12 @@ $bg: #202020;
 $hover: #2c2c2c;
 $muted: #aaa;
 $toggle-bg: #2a2a2a;
-$highlight: #cccccc;  // Statt #e0e0e0, um den Kontrast zu reduzieren
-$icon-muted: #999;    // Etwas heller als #888
-$icon-hover: #ddd;    // Statt #fff
+$highlight: #cccccc;
+$icon-muted: #999;
+$icon-hover: #ddd;
 $btn-hover-bg: #2e2e2e;
 $danger: #ff6b6b;
 $tooltip-bg: #2e2f39;
-
 
 @keyframes fadeInSlide {
   0% {
@@ -23,21 +22,23 @@ $tooltip-bg: #2e2f39;
 }
 
 .sidebar {
-  position: fixed;
+  position: fixed; // Macht sie unabhängig vom Content
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
   background-color: $bg;
-  top: 50%;         // Mittig auf der Y-Achse
-  transform: translateY(-50%);  // Perfekte Zentrierung
-  left: 1rem;
   width: 80px;
-  height: 80%;      // Höhe begrenzen für bessere Proportion
-  border-radius: 20px;
+  transition: width 0.3s ease;
   padding: 1rem 0.5rem;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
+  flex-shrink: 0;
 
+  &.expanded {
+    width: 240px;
+  }
 
   .nav-btn,
   .section-title,
@@ -45,11 +46,6 @@ $tooltip-bg: #2e2f39;
     transition: all 0.3s ease-in-out;
   }
 
-  &.expanded {
-    width: 240px;
-  }
-
-  // === Top Section ===
   .top-section {
     display: flex;
     flex-direction: column;
@@ -95,7 +91,6 @@ $tooltip-bg: #2e2f39;
     }
   }
 
-  // === Section Group ===
   .nav-section {
     display: flex;
     flex-direction: column;
@@ -107,20 +102,15 @@ $tooltip-bg: #2e2f39;
       margin-bottom: 0.5rem;
       width: 100%;
       text-align: left;
-      transition: none !important;
     }
 
-    // === MAIN title positioning (centered above MAIN icons)
     .main-title {
-      padding-left: 1.1rem; // ✅ visually centered for MAIN group
+      padding-left: 1.1rem;
     }
 
-    // === SETTINGS title positioning (centered above SETTINGS icons)
     .settings-title {
-      padding-left: 0.32rem; // ✅ slightly adjusted for visual centering
+      padding-left: 0.32rem;
     }
-
-
 
     .nav {
       display: flex;
@@ -130,13 +120,11 @@ $tooltip-bg: #2e2f39;
     }
   }
 
-  // === Bottom Nav
   .bottom-nav {
     display: flex;
     flex-direction: column;
   }
 
-  // === Base nav button style
   .nav-btn {
     position: relative;
     display: flex;
@@ -160,10 +148,9 @@ $tooltip-bg: #2e2f39;
       margin-left: 0.28rem;
     }
 
-    // Subtitle styles (only this animates)
     span {
       position: absolute;
-      left: 56px; // aligns nicely beside icon
+      left: 56px;
       opacity: 0;
       white-space: nowrap;
       color: inherit;
@@ -175,23 +162,18 @@ $tooltip-bg: #2e2f39;
       background-color: $tooltip-bg;
     }
 
-    &.centered {
-      justify-content: flex-start !important; // stop recenters
-    }
-
+    &.centered,
     &.left {
       justify-content: flex-start !important;
     }
   }
 
-  // === Subtitles fade in on expand
   &.expanded .nav-btn span {
     opacity: 1;
     transform: translateX(0);
     pointer-events: auto;
   }
 
-  // === MAIN Section: nicht mehr so starkes weiß
   .main-section .nav-btn {
     color: $highlight !important;
 
@@ -205,7 +187,6 @@ $tooltip-bg: #2e2f39;
     }
   }
 
-  // === SETTINGS + HELP: etwas helleres grau
   .nav-section:nth-of-type(2) .nav-btn,
   .bottom-nav .nav-btn:not(.logout) {
     color: $icon-muted;
@@ -219,7 +200,6 @@ $tooltip-bg: #2e2f39;
     }
   }
 
-  // === LOGOUT: red
   .logout {
     color: $danger;
 
@@ -232,7 +212,6 @@ $tooltip-bg: #2e2f39;
     }
   }
 
-  // === Toggle Button
   .toggle-btn {
     position: absolute;
     top: 0.7rem;
@@ -261,7 +240,6 @@ $tooltip-bg: #2e2f39;
     }
   }
 
-  // === Ensure all icons inherit current color
   mat-icon {
     color: inherit !important;
   }
@@ -275,7 +253,7 @@ $tooltip-bg: #2e2f39;
     top: 50%;
     left: 110%;
     transform: translateY(-50%);
-    background-color: #2e2f39; // ✅ dark grey-blue
+    background-color: $tooltip-bg;
     color: $highlight;
     padding: 0.4rem 0.8rem;
     font-size: 14px;
@@ -286,16 +264,15 @@ $tooltip-bg: #2e2f39;
     transition: opacity 0.2s ease, transform 0.2s ease;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 
-    // Optional arrow
     &::before {
       content: '';
       position: absolute;
-      left: -4px; // align correctly with reduced size
+      left: -4px;
       top: 50%;
       transform: translateY(-50%) rotate(45deg);
       width: 8px;
       height: 8px;
-      background-color: #2e2f39;
+      background-color: $tooltip-bg;
       z-index: -1;
     }
   }

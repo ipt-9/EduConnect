@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component, EventEmitter, Output} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,8 +24,11 @@ import {HttpClientModule} from '@angular/common/http';
 export class SidebarComponent {
   isExpanded = true;
 
+  @Output() expandedChange = new EventEmitter<boolean>();
+
   toggleSidebar(): void {
     this.isExpanded = !this.isExpanded;
+    this.expandedChange.emit(this.isExpanded);
   }
 }
 

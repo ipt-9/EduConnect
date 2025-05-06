@@ -623,3 +623,15 @@ $transition: all 0.3s ease;
     color: white;
   }
 }
+
+.dashboard {
+  margin-left: 80px;
+  transition: margin-left 0.3s ease;
+  padding: 2rem;
+
+  &.with-sidebar {
+    margin-left: 240px;
+  }
+}
+
+
