@@ -1,7 +1,6 @@
 <div class="sidebar" [class.expanded]="isExpanded">
   <!-- Top: Profile & Toggle Button -->
   <div class="top-section">
-    <img class="profile-img" src="assets/profile.jpg" alt="Profile" />
     <button class="toggle-btn" (click)="toggleSidebar()">
       <mat-icon>{{ isExpanded ? 'chevron_left' : 'chevron_right' }}</mat-icon>
     </button>
