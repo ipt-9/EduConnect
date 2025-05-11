@@ -1,48 +1,50 @@
 <app-sidebar></app-sidebar>
 
-<div class="group-manager-container">
-  <header>
-    <h1><i class="icon-users"></i> Gruppenverwaltung</h1>
-    <p>Verwalten Sie Ihre Gruppen, treten Sie bestehenden bei oder erstellen Sie neue.</p>
-  </header>
+<div class="group-manager-wrapper">
+  <div class="group-manager-container">
+    <header>
+      <h1><i class="icon-users"></i> Gruppenverwaltung</h1>
+      <p>Verwalten Sie Ihre Gruppen, treten Sie bestehenden bei oder erstellen Sie neue.</p>
+    </header>
 
-  <div class="grid">
-    <section class="panel">
-      <h2>➕ Neue Gruppe erstellen</h2>
-      <div class="form-group">
-        <label for="groupName">Gruppenname</label>
-        <input [(ngModel)]="groupName" id="groupName" placeholder="z. B. Marketing-Team">
-      </div>
-      <div class="form-group">
-        <label for="groupDescription">Beschreibung</label>
-        <textarea [(ngModel)]="groupDescription" id="groupDescription" placeholder="Was macht diese Gruppe?"></textarea>
-      </div>
-      <button class="primary" (click)="createGroup()">Gruppe erstellen</button>
-    </section>
+    <div class="grid">
+      <section class="panel">
+        <h2>➕ Neue Gruppe erstellen</h2>
+        <div class="form-group">
+          <label for="groupName">Gruppenname</label>
+          <input [(ngModel)]="groupName" id="groupName" placeholder="z. B. Marketing-Team">
+        </div>
+        <div class="form-group">
+          <label for="groupDescription">Beschreibung</label>
+          <textarea [(ngModel)]="groupDescription" id="groupDescription" placeholder="Was macht diese Gruppe?"></textarea>
+        </div>
+        <button class="primary" (click)="createGroup()">Gruppe erstellen</button>
+      </section>
 
-    <section class="panel">
-      <h2>🔑 Gruppe beitreten</h2>
-      <div class="form-group">
-        <label for="joinCode">Einladungscode</label>
-        <input [(ngModel)]="joinCode" id="joinCode" placeholder="ABC123XYZ">
+      <section class="panel">
+        <h2>🔑 Gruppe beitreten</h2>
+        <div class="form-group">
+          <label for="joinCode">Einladungscode</label>
+          <input [(ngModel)]="joinCode" id="joinCode" placeholder="ABC123XYZ">
+        </div>
+        <button class="primary" (click)="joinGroup()">Beitreten</button>
+      </section>
+    </div>
+
+    <section class="my-groups">
+      <h2>📋 Meine Gruppen</h2>
+      <div *ngIf="groups?.length === 0" class="empty-state">
+        <p>Sie sind noch keiner Gruppe beigetreten oder haben eine erstellt.</p>
       </div>
-      <button class="primary" (click)="joinGroup()">Beitreten</button>
+      <div class="group-list">
+        <div class="group-card" *ngFor="let group of groups">
+          <div class="details">
+            <h3>{{group.name}}</h3>
+            <p>{{group.description}}</p>
+          </div>
+          <a [routerLink]="['/groups', group.id]" class="link-button">Zur Übersicht</a>
+        </div>
+      </div>
     </section>
   </div>
-
-  <section class="my-groups">
-    <h2>📋 Meine Gruppen</h2>
-    <div *ngIf="groups?.length === 0" class="empty-state">
-      <p>Sie sind noch keiner Gruppe beigetreten oder haben eine erstellt.</p>
-    </div>
-    <div class="group-list">
-      <div class="group-card" *ngFor="let group of groups">
-        <div class="details">
-          <h3>{{group.name}}</h3>
-          <p>{{group.description}}</p>
-        </div>
-        <a [routerLink]="['/groups', group.id]" class="link-button">Zur Übersicht</a>
-      </div>
-    </div>
-  </section>
 </div>
