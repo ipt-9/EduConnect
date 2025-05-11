@@ -13,13 +13,19 @@
     <div class="nav-section main-section">
       <div class="section-title main-title">MAIN</div>
       <nav class="nav">
-        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
-          <mat-icon>bar_chart</mat-icon>
-          <span *ngIf="isExpanded">Dashboard</span>
-          <div class="side-tooltip" *ngIf="!isExpanded">Dashboard</div>
+        <!-- Dashboard (was Home) -->
+        <button class="nav-btn has-tooltip"
+                [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }"
+                (click)="navigateTo('dashboard')">
+          <mat-icon>home</mat-icon>
+          <span *ngIf="isExpanded">Home</span>
+          <div class="side-tooltip" *ngIf="!isExpanded">Home</div>
         </button>
 
-        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+        <!-- Users (groupmanager) -->
+        <button class="nav-btn has-tooltip"
+                [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }"
+                (click)="navigateTo('groupmanager')">
           <mat-icon>person</mat-icon>
           <span *ngIf="isExpanded">Users</span>
           <div class="side-tooltip" *ngIf="!isExpanded">Users</div>
