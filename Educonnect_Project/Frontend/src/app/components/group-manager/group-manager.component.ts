@@ -3,13 +3,14 @@ import { HttpClient, HttpHeaders, HttpClientModule } from '@angular/common/http'
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { SidebarComponent } from '../sidebar/sidebar.component';
 
 @Component({
   standalone: true,
   selector: 'app-group-manager',
   templateUrl: './group-manager.component.html',
   styleUrls: ['./group-manager.component.scss'],
-  imports: [CommonModule, FormsModule, HttpClientModule,RouterModule]
+  imports: [CommonModule, FormsModule, HttpClientModule,RouterModule, SidebarComponent]
 })
 export class GroupManagerComponent implements OnInit {
   groups: any[] = [];
