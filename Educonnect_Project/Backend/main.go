@@ -5,6 +5,7 @@ import (
 	"github.com/ipt-9/EduConnect/DB"
 	"github.com/ipt-9/EduConnect/Routes"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 	"log"
 	"net/http"
 )
@@ -22,7 +23,7 @@ func main() {
 
 	r := mux.NewRouter()
 	routes.InitJWT()
-
+	handler := cors.AllowAll().Handler(r)
 	r.HandleFunc("/register", routes.Register).Methods("POST", "OPTIONS")
 	r.HandleFunc("/login", routes.Login).Methods("POST", "OPTIONS")
 	r.HandleFunc("/protected", routes.Protected).Methods("GET", "OPTIONS")
@@ -50,6 +51,10 @@ func main() {
 	r.HandleFunc("/groups/{groupID}/messages", routes.GetGroupMessagesHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/ws/groups/{groupID}/chat", routes.HandleGroupChatWS)
 
+	//Payment routes
+	r.HandleFunc("/create-checkout-session", routes.CreateCheckoutSession).Methods("POST", "OPTIONS")
+	r.HandleFunc("/session-status", routes.RetrieveCheckoutSession).Methods("GET", "OPTIONS")
+
 	log.Println("🚀 Server läuft auf http://localhost:8080")
-	http.ListenAndServe(":8080", r)
+	http.ListenAndServe(":8080", handler)
 }

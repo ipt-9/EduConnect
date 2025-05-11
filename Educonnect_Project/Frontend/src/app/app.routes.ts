@@ -14,6 +14,7 @@ import {GroupChatComponent} from './components/groupchat/groupchat.component';
 import {GroupDetailsComponent} from './components/group-details/group-details.component';
 import { GroupRoleManagerComponent } from './components/group-role-manager/group-role-manager.component';
 import {DashboardComponent} from './components/dashboard/dashboard.component';
+import {PaymentComponent} from './components/payment/payment.component';
 
 export const routes: Routes = [
   { path: '', component: HomepageComponent },
@@ -30,4 +31,5 @@ export const routes: Routes = [
   { path: 'groups/:id', component: GroupDetailsComponent, canActivate: [AuthGuard] },
   { path: 'groups/:id/manage-roles', component: GroupRoleManagerComponent },
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
+  {path: 'payment', component: PaymentComponent, canActivate: [AuthGuard]},
 ];
