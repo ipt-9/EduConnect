@@ -31,7 +31,7 @@ func CreateCheckoutSession(w http.ResponseWriter, r *http.Request) {
 		ReturnURL: stripe.String(domain + "/dashboard"),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
-				Price:    stripe.String("price_1RNfvv02US8DmCztoUEAycyM"), // <-- gültige Preis-ID hier
+				Price:    stripe.String("price_1RBbSa01266L6uW7c54LKNCg"), // <-- gültige Preis-ID hier
 				Quantity: stripe.Int64(1),
 			},
 		},
