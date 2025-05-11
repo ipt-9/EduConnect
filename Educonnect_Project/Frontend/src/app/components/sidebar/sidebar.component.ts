@@ -6,6 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-sidebar',
@@ -26,11 +27,23 @@ export class SidebarComponent {
 
   @Output() expandedChange = new EventEmitter<boolean>();
 
-  constructor(private router: Router) {} // ✅ INSIDE the class
+  constructor(private http: HttpClient, private router: Router) {} // ✅ INSIDE the class
 
   toggleSidebar(): void {
     this.isExpanded = !this.isExpanded;
     this.expandedChange.emit(this.isExpanded);
+  }
+  logout() {
+    this.http.post('http://localhost:8080/logout', {}).subscribe({
+      next: () => {
+        localStorage.clear();
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        localStorage.clear();
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   navigateTo(path: string): void {

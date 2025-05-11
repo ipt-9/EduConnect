@@ -32,12 +32,6 @@
         </button>
 
         <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
-          <mat-icon>home</mat-icon>
-          <span *ngIf="isExpanded">Home</span>
-          <div class="side-tooltip" *ngIf="!isExpanded">Home</div>
-        </button>
-
-        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
           <mat-icon>calendar_today</mat-icon>
           <span *ngIf="isExpanded">Calendar</span>
           <div class="side-tooltip" *ngIf="!isExpanded">Calendar</div>
@@ -73,7 +67,9 @@
         <div class="side-tooltip" *ngIf="!isExpanded">Help</div>
       </button>
 
-      <button class="nav-btn logout has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+      <button class="nav-btn logout has-tooltip"
+              [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }"
+              (click)="logout()">
         <mat-icon>logout</mat-icon>
         <span *ngIf="isExpanded">Logout</span>
         <div class="side-tooltip" *ngIf="!isExpanded">Logout</div>
