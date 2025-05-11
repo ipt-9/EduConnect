@@ -10,6 +10,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { SidebarComponent } from '../sidebar/sidebar.component';
 
 interface GroupChatMessage {
   linked_task_id?: number | null; // ✅ optional + korrekt typisiert
@@ -39,7 +40,7 @@ function getUserPayloadFromToken(token: string): any {
   selector: 'app-group-chat',
   templateUrl: './groupchat.component.html',
   styleUrls: ['./groupchat.component.scss'],
-  imports: [CommonModule, FormsModule, HttpClientModule]
+  imports: [CommonModule, FormsModule, HttpClientModule, SidebarComponent]
 })
 export class GroupChatComponent implements OnInit, OnDestroy {
   groupId!: number;

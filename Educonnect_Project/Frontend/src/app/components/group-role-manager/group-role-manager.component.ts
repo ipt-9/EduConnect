@@ -3,13 +3,14 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { SidebarComponent } from '../sidebar/sidebar.component';
 
 @Component({
   selector: 'app-group-role-manager',
   standalone: true,
   templateUrl: './group-role-manager.component.html',
   styleUrls: ['./group-role-manager.component.scss'],
-  imports: [CommonModule, RouterModule, HttpClientModule],
+  imports: [CommonModule, RouterModule, HttpClientModule, SidebarComponent],
 })
 export class GroupRoleManagerComponent implements OnInit {
   groupId!: number;

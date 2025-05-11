@@ -4,11 +4,12 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { SidebarComponent } from '../sidebar/sidebar.component';
 
 @Component({
   selector: 'app-group-details',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, RouterModule],
+  imports: [CommonModule, HttpClientModule, RouterModule, SidebarComponent],
   templateUrl: './group-details.component.html',
   styleUrls: ['./group-details.component.scss']
 })
