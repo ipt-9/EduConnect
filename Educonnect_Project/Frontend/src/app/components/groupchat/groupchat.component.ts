@@ -11,9 +11,11 @@ import { HttpClient, HttpHeaders, HttpClientModule } from '@angular/common/http'
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SidebarComponent } from '../sidebar/sidebar.component';
+import { NgZone } from '@angular/core';
+
 
 interface GroupChatMessage {
-  linked_task_id?: number | null; // ✅ optional + korrekt typisiert
+  linked_task_id?: number | null;
   message: string;
   created_at: string;
   message_type?: string;
@@ -30,7 +32,7 @@ function getUserPayloadFromToken(token: string): any {
     const payload = token.split('.')[1];
     return JSON.parse(atob(payload));
   } catch (err) {
-    console.error("Fehler beim Dekodieren des Tokens:", err);
+    console.error("❌ Fehler beim Dekodieren des Tokens:", err);
     return {};
   }
 }
@@ -58,11 +60,14 @@ export class GroupChatComponent implements OnInit, OnDestroy {
   showSubmissionList = false;
 
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
+  @ViewChild('scrollAnchor') scrollAnchor!: ElementRef;
+
 
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -70,7 +75,7 @@ export class GroupChatComponent implements OnInit, OnDestroy {
     this.token = localStorage.getItem('token');
 
     if (!this.groupId || !this.token) {
-      console.error('Token oder Gruppen-ID fehlen');
+      console.error('❗ Token oder Gruppen-ID fehlen');
       return;
     }
 
@@ -88,6 +93,108 @@ export class GroupChatComponent implements OnInit, OnDestroy {
     this.socket?.complete();
   }
 
+  private getAuthHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token');
+    return new HttpHeaders({
+      Authorization: `Bearer ${token ?? ''}`
+    });
+  }
+
+  private scrollToBottom(): void {
+    this.ngZone.runOutsideAngular(() => {
+      requestAnimationFrame(() => {
+        try {
+          this.scrollAnchor.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        } catch (err) {
+          console.error('Scroll error:', err);
+        }
+      });
+    });
+  }
+
+
+  loadHistory(): void {
+    this.http
+      .get<GroupChatMessage[]>(`http://localhost:8080/groups/${this.groupId}/messages`, {
+        headers: this.getAuthHeaders()
+      })
+      .subscribe(data => {
+        this.messages = data.map(m => ({
+          ...m,
+          message_type: m.message_type ?? (m as any).MessageType ?? 'text'
+        })).reverse();
+
+        setTimeout(() => this.scrollToBottom(), 0);
+      });
+  }
+
+  connectWebSocket(): void {
+    this.socket = new WebSocketSubject(
+      `ws://localhost:8080/ws/groups/${this.groupId}/chat?token=${this.token}`
+    );
+
+    this.socket.subscribe({
+      next: (msg: GroupChatMessage) => {
+        msg.message_type = msg.message_type ?? (msg as any).MessageType ?? 'text';
+        this.messages.push(msg);
+        setTimeout(() => this.scrollToBottom(), 0);
+      },
+      error: err => console.error('WebSocket Fehler:', err),
+      complete: () => console.log('WebSocket Verbindung geschlossen')
+    });
+  }
+
+  sendMessage(): void {
+    if (!this.messageText.trim()) return;
+
+    const newMessage = { message: this.messageText, type: 'text' };
+    this.socket.next(newMessage);
+    this.messageText = '';
+  }
+
+  isOwnMessage(msg: GroupChatMessage): boolean {
+    return msg.user.id === this.currentUserId;
+  }
+
+  loadSubmissions(): void {
+    this.showSubmissionList = !this.showSubmissionList;
+    if (this.submissions.length > 0) return;
+
+    this.http
+      .get<{ task_id: number; task_title: string }[]>(
+        `http://localhost:8080/users/me/submissions`,
+        { headers: this.getAuthHeaders() }
+      )
+      .subscribe({
+        next: res => (this.submissions = res),
+        error: err => console.error('Fehler beim Laden der Submissions:', err)
+      });
+  }
+
+  shareSubmission(taskId: number): void {
+    this.http
+      .post(
+        `http://localhost:8080/groups/${this.groupId}/share-submission`,
+        { task_id: taskId },
+        { headers: this.getAuthHeaders() }
+      )
+      .subscribe({
+        next: () => console.log('✅ Submission geteilt'),
+        error: err => console.error('❌ Fehler beim Teilen:', err)
+      });
+  }
+
+  openSubmission(msg: GroupChatMessage): void {
+    if (!msg.linked_task_id) {
+      console.warn('⚠️ Keine taskId in Nachricht vorhanden:', msg);
+      return;
+    }
+
+    this.router.navigate(['/codingSpace'], {
+      queryParams: { taskId: msg.linked_task_id }
+    });
+  }
+
   extractTaskTitle(message: string): string {
     const match = message.match(/Aufgabe „(.+?)“/);
     return match ? match[1] : 'Unbekannt';
@@ -101,101 +208,5 @@ export class GroupChatComponent implements OnInit, OnDestroy {
   extractTaskId(message: string): number | null {
     const match = message.match(/taskId=(\d+)/);
     return match ? parseInt(match[1], 10) : null;
-  }
-
-  openSubmission(msg: GroupChatMessage): void {
-    if (!msg.linked_task_id) {
-      console.warn("⚠️ Keine taskId in Nachricht vorhanden:", msg);
-      return;
-    }
-
-    console.log("➡️ Navigiere zu taskId =", msg.linked_task_id);
-    this.router.navigate(['/codingSpace'], {
-      queryParams: { taskId: msg.linked_task_id }
-    });
-  }
-
-
-  getAuthHeaders() {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      Authorization: `Bearer ${token ?? ''}`
-    });
-  }
-
-  loadHistory() {
-    this.http.get<any[]>(`http://localhost:8080/groups/${this.groupId}/messages`, {
-      headers: this.getAuthHeaders()
-    }).subscribe(data => {
-      // 🔄 MessageType normalisieren
-      this.messages = data.map(m => ({
-        ...m,
-        message_type: m.MessageType ?? m.message_type ?? 'text'
-      })).reverse();
-      setTimeout(() => this.scrollToBottom(), 0);
-    });
-  }
-
-
-  connectWebSocket() {
-    this.socket = new WebSocketSubject(`ws://localhost:8080/ws/groups/${this.groupId}/chat?token=${this.token}`);
-
-    this.socket.subscribe({
-      next: (msg: GroupChatMessage) => {
-        // 🔄 MessageType normalisieren
-        if ((msg as any).MessageType) {
-          msg.message_type = (msg as any).MessageType;
-        }
-        this.messages.push(msg);
-        setTimeout(() => this.scrollToBottom(), 0);
-      },
-      error: err => console.error('WebSocket Fehler:', err),
-      complete: () => console.log('WebSocket Verbindung geschlossen')
-    });
-  }
-
-
-  sendMessage() {
-    if (!this.messageText.trim()) return;
-
-    const newMessage = { message: this.messageText, type: "text" };
-    this.socket.next(newMessage);
-    this.messageText = '';
-  }
-
-  loadSubmissions() {
-    this.showSubmissionList = !this.showSubmissionList;
-    if (this.submissions.length > 0) return;
-
-    this.http.get<{ task_id: number, task_title: string }[]>(
-      `http://localhost:8080/users/me/submissions`,
-      { headers: this.getAuthHeaders() }
-    ).subscribe({
-      next: (res) => this.submissions = res,
-      error: (err) => console.error("Fehler beim Laden der Submissions:", err)
-    });
-  }
-
-  shareSubmission(taskId: number) {
-    this.http.post(
-      `http://localhost:8080/groups/${this.groupId}/share-submission`,
-      { task_id: taskId },
-      { headers: this.getAuthHeaders() }
-    ).subscribe({
-      next: () => console.log("Submission geteilt"),
-      error: (err) => console.error("Fehler beim Teilen:", err)
-    });
-  }
-
-  isOwnMessage(msg: GroupChatMessage): boolean {
-    return msg.user.id === this.currentUserId;
-  }
-
-  private scrollToBottom(): void {
-    try {
-      this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
-    } catch (err) {
-      console.error('Scroll error:', err);
-    }
   }
 }

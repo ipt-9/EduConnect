@@ -25,21 +25,20 @@
     </div>
   </div>
 
-  <button [routerLink]="['/groups', groupId, 'chat']" class="chat-button">
-    💬 Zum Gruppenchat
-  </button>
 
-  <button class="leave-button" (click)="leaveGroup()">
-    🚪 Gruppe verlassen
-  </button>
 
-  <a
-    *ngIf="isCurrentUserAdmin"
-    [routerLink]="['/groups', groupId, 'manage-roles']"
-    class="admin-link"
-  >
-    🛠️ Rollen verwalten
-  </a>
+  <div class="action-buttons">
+    <button [routerLink]="['/groups', groupId, 'chat']" class="chat-button">
+      💬 Zum Gruppenchat
+    </button>
+    <button class="leave-button">🚪 Gruppe verlassen</button>
+    <a *ngIf="isCurrentUserAdmin"
+       [routerLink]="['/groups', groupId, 'manage-roles']"
+       class="admin-link">
+      🛠️ Rollen verwalten
+    </a>
+  </div>
+
 
   <h3>📬 Letzte Aktivitäten</h3>
   <div class="notification-list">

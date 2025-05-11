@@ -1,7 +1,7 @@
-<div class="content-wrapper">
-  <app-sidebar></app-sidebar>
+<app-sidebar></app-sidebar>
 
-  <main class="task-dashboard">
+<div class="content-wrapper">
+  <main class="task-dashboard centered-narrow">
     <div class="task-container">
       <h2>Aufgabenübersicht</h2>
 
@@ -20,7 +20,6 @@
 
         <div class="description-preview" [class.expanded]="task.expanded">
           {{ task.description }}
-
           <button
             class="open-task-btn"
             *ngIf="task.expanded"
