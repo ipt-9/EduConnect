@@ -317,3 +317,75 @@ func GetSubmittedCode(w http.ResponseWriter, r *http.Request) {
 		"code": code,
 	})
 }
+func GetLastVisitedCourseHandler(w http.ResponseWriter, r *http.Request) {
+	EnableCORS(w)
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		http.Error(w, "Authorization Header fehlt oder ist ungültig", http.StatusUnauthorized)
+		return
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := &Claims{}
+
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "Ungültiges oder abgelaufenes Token", http.StatusUnauthorized)
+		return
+	}
+
+	log.Printf("🔑 User-ID: %d fragt letzten besuchten Kurs und Aufgabe ab\n", claims.UserID)
+
+	info, err := DB.GetLastVisitedCourseAndTask(claims.UserID)
+	if err != nil {
+		log.Printf("🚫 Fehler beim Abrufen: %v\n", err)
+		http.Error(w, "Fehler beim Abrufen: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
+}
+func GetDashboardOverviewHandler(w http.ResponseWriter, r *http.Request) {
+	EnableCORS(w)
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		http.Error(w, "Authorization Header fehlt oder ist ungültig", http.StatusUnauthorized)
+		return
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := &Claims{}
+
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "Ungültiges oder abgelaufenes Token", http.StatusUnauthorized)
+		return
+	}
+
+	log.Printf("📊 User-ID: %d fragt Dashboard Übersicht ab\n", claims.UserID)
+
+	info, err := DB.GetDashboardOverview(claims.UserID)
+	if err != nil {
+		log.Printf("🚫 Fehler beim Abrufen der Übersicht: %v\n", err)
+		http.Error(w, "Fehler beim Abrufen der Übersicht: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
+}

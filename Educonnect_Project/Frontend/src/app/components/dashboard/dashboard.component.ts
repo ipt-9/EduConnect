@@ -4,13 +4,16 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
+
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   imports: [
     SidebarComponent,
-    CommonModule
+    CommonModule,
+    RouterModule
   ],
   styleUrls: ['./dashboard.component.scss']
 })
@@ -24,20 +27,76 @@ export class DashboardComponent implements OnInit {
     xp: 2750,
     nextLevelXp: 3000
   };
-
-  recentCourse = {
-    title: 'JavaScript Grundlagen',
-    progress: 65,
-    lastLesson: 'Funktionen und Callbacks',
-    imageUrl: 'assets/js-course.jpg'
+  public recentCourse = {
+    title: '',
+    progress: 0,
+    lastLesson: '',
+    taskDescription: '',
+    imageUrl: '',
+    courseId: false
   };
+  public dashboardOverview = {
+    lastMessageText: '',
+    lastMessageCreatedAt: '',
+    lastMessageGroupId: 0,
+    nextPendingTaskTitle: '',
+    nextPendingTaskId: 0
+  };
+  loadDashboardOverview(): void {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+
+    this.http.get<any>('http://localhost:8080/dashboard-overview', { headers }).subscribe({
+      next: (data) => {
+        console.log('📊 Dashboard Overview:', data);
+        this.dashboardOverview.lastMessageText = data.last_message_text || 'Keine neue Nachricht';
+        this.dashboardOverview.lastMessageCreatedAt = this.formatDateToZurich(data.last_message_created_at);
+        this.dashboardOverview.lastMessageGroupId = data.last_message_group_id || 0;
+        this.dashboardOverview.nextPendingTaskTitle = data.next_pending_task_title;
+        this.dashboardOverview.nextPendingTaskId = data.next_pending_task_id;
+      },
+      error: (err) => {
+        console.error('❌ Fehler beim Laden der Dashboard-Übersicht:', err);
+      }
+    });
+  }
+
+  loadLastVisitedCourseAndTask(): void {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+
+    this.http.get<any>('http://localhost:8080/last-course', { headers }).subscribe({
+      next: (data) => {
+        console.log('🕹️ Letzter besuchter Kurs und Aufgabe:', data);
+        this.recentCourse.title = data.course_title;
+        this.recentCourse.progress = data.progress_percent;
+        this.recentCourse.lastLesson = data.task_title;
+        this.recentCourse.taskDescription = data.task_description;
+        this.recentCourse.imageUrl = this.getCourseImage(data.language);
+        this.recentCourse.courseId = data.course_id;
+        },
+      error: (err) => {
+        console.error('❌ Fehler beim Laden des letzten Kurses:', err);
+      }
+    });
+  }
+
+  openTask(taskId: number): void {
+    if (taskId) {
+      localStorage.setItem('activeTaskId', taskId.toString());
+      this.router.navigate(['/codingSpace']);
+    } else {
+      console.error('⚠️ Keine offene Aufgabe gefunden.');
+    }
+  }
+
 
   recentChat = {
-    title: 'Hilfe bei Arrays',
-    lastMessage: 'Kannst du mir erklären, wie map() funktioniert?',
-    time: '14:25',
-    unread: 2
+    title: 'Letzter Chat',
+    lastMessage: '',
+    time: ''
   };
+
 
   learningPath = {
     title: 'Full-Stack Entwickler',
@@ -59,6 +118,9 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadMyCourses();
+    this.loadUser();
+    this.loadLastVisitedCourseAndTask();
+    this.loadDashboardOverview();
   }
 
   onSidebarExpand(value: boolean): void {
@@ -99,4 +161,34 @@ export class DashboardComponent implements OnInit {
         return 'assets/img/default-course-cover.png';
     }
   }
+  loadUser(): void { // 🆕 Neue Funktion für den Benutzernamen
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+
+    this.http.get<{ username: string }>('http://localhost:8080/me', {headers}).subscribe({
+      next: (data) => {
+        this.user.name = data.username;
+        console.log('🙋 Benutzer geladen:', data.username);
+      },
+      error: (err) => {
+        console.error('❌ Fehler beim Laden des Benutzers:', err);
+      }
+    });
+  }
+  continueCourse(): void {
+    if (this.recentCourse && this.recentCourse.courseId) {
+      localStorage.setItem('activeCourseId', this.recentCourse.courseId.toString());
+      this.router.navigate(['/taskslist']);
+    } else {
+      console.error('⚠️ Kein Kurs zum Fortsetzen verfügbar');
+    }
+  }
+
+  formatDateToZurich(utcDateTime: string): string {
+    if (!utcDateTime) return 'Keine Zeit verfügbar';
+    const date = new Date(utcDateTime);
+    const zurichTime = date.toLocaleString('de-CH', { timeZone: 'Europe/Zurich' });
+    return zurichTime;
+  }
+
 }

@@ -82,7 +82,8 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 	groupClients[groupID][conn] = true
 	groupClientsMutex.Unlock()
 
-	pastMessages, err := DB.GetFullGroupMessages(groupID, 1000)
+	pastMessages, err := DB.GetFullGroupMessages(claims.UserID, groupID, 1000)
+
 	if err != nil {
 		log.Printf("❌ Fehler beim Laden alter Nachrichten: %v", err)
 	} else {
@@ -199,7 +200,8 @@ func GetGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 4️⃣ Datenbankabfrage
-	messages, err := DB.GetFullGroupMessages(groupID, 1000000)
+	messages, err := DB.GetFullGroupMessages(claims.UserID, groupID, 1000000)
+
 	if err != nil {
 		EnableCORS(w)
 		http.Error(w, "Fehler beim Laden: "+err.Error(), http.StatusInternalServerError)

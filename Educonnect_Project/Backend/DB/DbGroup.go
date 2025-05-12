@@ -214,13 +214,23 @@ type GroupChatMessage struct {
 	} `json:"user"`
 }
 
-func GetFullGroupMessages(groupID uint64, limit int) ([]GroupChatMessage, error) {
+func GetFullGroupMessages(userID uint64, groupID uint64, limit int) ([]GroupChatMessage, error) {
+	// Prüfen, ob User Mitglied der Gruppe ist
+	isMember, err := IsUserMemberOfGroup(userID, groupID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, fmt.Errorf("Zugriff verweigert: kein Mitglied der Gruppe %d", groupID)
+	}
+
+	// Nachrichten aus der Gruppe holen
 	rows, err := DB.Query(`
 		SELECT 
 			gm.message,
 			gm.created_at,
 			gm.message_type,
-			gm.linked_task_id,  -- ✅ NEU!
+			gm.linked_task_id,
 			u.id,
 			u.username,
 			u.email,
@@ -239,13 +249,13 @@ func GetFullGroupMessages(groupID uint64, limit int) ([]GroupChatMessage, error)
 	var messages []GroupChatMessage
 	for rows.Next() {
 		var msg GroupChatMessage
-		var linkedTaskID *uint64 // ⬅️ benötigt für NULL handling
+		var linkedTaskID *uint64
 
 		err := rows.Scan(
 			&msg.Message,
 			&msg.CreatedAt,
 			&msg.MessageType,
-			&linkedTaskID, // ✅ NEU!
+			&linkedTaskID,
 			&msg.User.ID,
 			&msg.User.Username,
 			&msg.User.Email,
@@ -255,11 +265,25 @@ func GetFullGroupMessages(groupID uint64, limit int) ([]GroupChatMessage, error)
 			return nil, err
 		}
 
-		msg.LinkedTaskID = linkedTaskID // ✅ Setzen
+		msg.LinkedTaskID = linkedTaskID
 		messages = append(messages, msg)
 	}
 
 	return messages, nil
+}
+func IsUserMemberOfGroup(userID uint64, groupID uint64) (bool, error) {
+	row := DB.QueryRow(`
+		SELECT COUNT(*)
+		FROM group_members
+		WHERE user_id = ? AND group_id = ?
+	`, userID, groupID)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
 
 func GetGroupsForUser(userID uint64) ([]Group, error) {
@@ -374,4 +398,75 @@ func GetSubmissionByTaskAndUser(taskID uint64, userID uint64) (*Submission, erro
 		return nil, err
 	}
 	return &sub, nil
+}
+
+type LastCourseAndTaskInfo struct {
+	CourseID        int    `json:"course_id"`
+	CourseTitle     string `json:"course_title"`
+	Language        string `json:"language"`
+	Difficulty      string `json:"difficulty"`
+	Topic           string `json:"topic"`
+	ProgressPercent int    `json:"progress_percent"`
+
+	TaskID          int    `json:"task_id"`
+	TaskTitle       string `json:"task_title"`
+	TaskDescription string `json:"task_description"`
+}
+
+func GetLastVisitedCourseAndTask(userID uint64) (*LastCourseAndTaskInfo, error) {
+	tx, err := DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Hole letzte Submission samt Kurs und Task Details
+	query := `
+		SELECT c.id, c.topic, c.programming_language, c.difficulty, c.topic,
+		       t.id, t.title, t.description
+		FROM submissions s
+		JOIN tasks t ON s.task_id = t.id
+		JOIN courses c ON t.course_id = c.id
+		WHERE s.user_id = ?
+		ORDER BY s.submitted_at DESC
+		LIMIT 1
+	`
+
+	row := tx.QueryRow(query, userID)
+
+	var result LastCourseAndTaskInfo
+	if err := row.Scan(&result.CourseID, &result.CourseTitle, &result.Language, &result.Difficulty, &result.Topic,
+		&result.TaskID, &result.TaskTitle, &result.TaskDescription); err != nil {
+		return nil, err
+	}
+
+	// Gesamtanzahl Aufgaben im Kurs
+	var totalTasks int
+	if err := tx.QueryRow(`SELECT COUNT(*) FROM tasks WHERE course_id = ?`, result.CourseID).Scan(&totalTasks); err != nil {
+		return nil, err
+	}
+
+	// Erledigte Aufgaben zählen
+	var completedTasks int
+	if err := tx.QueryRow(`
+		SELECT COUNT(DISTINCT t.id)
+		FROM submissions s
+		JOIN tasks t ON s.task_id = t.id
+		WHERE s.user_id = ? AND t.course_id = ? AND s.is_successful = 1
+	`, userID, result.CourseID).Scan(&completedTasks); err != nil {
+		return nil, err
+	}
+
+	// Berechne den Fortschritt
+	progressPercent := 0
+	if totalTasks > 0 {
+		progressPercent = int(float64(completedTasks) / float64(totalTasks) * 100)
+	}
+	result.ProgressPercent = progressPercent
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }

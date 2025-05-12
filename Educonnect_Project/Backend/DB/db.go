@@ -541,3 +541,83 @@ func GetUsernameByUserID(userID uint64) (string, error) {
 	err := DB.QueryRow(`SELECT username FROM users WHERE id = ?`, userID).Scan(&username)
 	return username, err
 }
+
+type DashboardOverview struct {
+	LastMessageText      string `json:"last_message_text"`
+	LastMessageCreatedAt string `json:"last_message_created_at"`
+	LastMessageGroupId   int    `json:"last_message_group_id"`
+	NextPendingTaskTitle string `json:"next_pending_task_title"`
+	NextPendingTaskId    int    `json:"next_pending_task_id"`
+}
+
+func GetDashboardOverview(userID uint64) (*DashboardOverview, error) {
+	tx, err := DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Letzten Kurs ermitteln
+	var lastCourseID int
+	err = tx.QueryRow(`
+		SELECT c.id
+		FROM submissions s
+		JOIN tasks t ON s.task_id = t.id
+		JOIN courses c ON t.course_id = c.id
+		WHERE s.user_id = ?
+		ORDER BY s.submitted_at DESC
+		LIMIT 1
+	`, userID).Scan(&lastCourseID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Letzte empfangene Nachricht in Gruppen, wo der User Mitglied ist (nicht vom User selbst)
+	var lastMessageText, lastMessageCreatedAt string
+	var lastMessageGroupId int
+	err = tx.QueryRow(`
+	SELECT gm.message, gm.created_at, gm.group_id
+	FROM group_messages gm
+	JOIN group_members gmbr ON gm.group_id = gmbr.group_id
+	WHERE gmbr.user_id = ? AND gm.user_id != ?
+	ORDER BY gm.created_at DESC
+	LIMIT 1
+`, userID, userID).Scan(&lastMessageText, &lastMessageCreatedAt, &lastMessageGroupId)
+	if err != nil {
+		lastMessageText = ""
+		lastMessageCreatedAt = ""
+		lastMessageGroupId = 0
+	}
+
+	// Nächste noch offene Aufgabe im letzten Kurs
+	var nextTaskTitle string
+	var nextTaskId int
+	err = tx.QueryRow(`
+		SELECT t.id, t.title
+		FROM tasks t
+		LEFT JOIN (
+			SELECT task_id
+			FROM submissions
+			WHERE user_id = ? AND is_successful = 1
+		) s ON t.id = s.task_id
+		WHERE t.course_id = ? AND s.task_id IS NULL
+		ORDER BY t.id ASC
+		LIMIT 1
+	`, userID, lastCourseID).Scan(&nextTaskId, &nextTaskTitle)
+	if err != nil {
+		nextTaskTitle = ""
+		nextTaskId = 0
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return &DashboardOverview{
+		LastMessageText:      lastMessageText,
+		LastMessageCreatedAt: lastMessageCreatedAt,
+		NextPendingTaskTitle: nextTaskTitle,
+		NextPendingTaskId:    nextTaskId,
+		LastMessageGroupId:   lastMessageGroupId,
+	}, nil
+}

@@ -51,6 +51,7 @@ export class GroupChatComponent implements OnInit, OnDestroy {
   currentUsername = '';
   currentEmail = '';
   profilePictureUrl?: string;
+  public accessDenied = false;
 
   messages: GroupChatMessage[] = [];
   messageText = '';
@@ -118,15 +119,24 @@ export class GroupChatComponent implements OnInit, OnDestroy {
       .get<GroupChatMessage[]>(`http://localhost:8080/groups/${this.groupId}/messages`, {
         headers: this.getAuthHeaders()
       })
-      .subscribe(data => {
-        this.messages = data.map(m => ({
-          ...m,
-          message_type: m.message_type ?? (m as any).MessageType ?? 'text'
-        })).reverse();
-
-        setTimeout(() => this.scrollToBottom(), 0);
+      .subscribe({
+        next: data => {
+          this.messages = data.map(m => ({
+            ...m,
+            message_type: m.message_type ?? (m as any).MessageType ?? 'text'
+          })).reverse();
+          setTimeout(() => this.scrollToBottom(), 0);
+        },
+        error: err => {
+          if (err.status === 403) {
+            this.accessDenied = true;  // 🆕 Status aktivieren
+          } else {
+            console.error('Fehler beim Laden der Nachrichten:', err);
+          }
+        }
       });
   }
+
 
   connectWebSocket(): void {
     this.socket = new WebSocketSubject(
