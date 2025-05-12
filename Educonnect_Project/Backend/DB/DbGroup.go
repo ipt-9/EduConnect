@@ -470,3 +470,31 @@ func GetLastVisitedCourseAndTask(userID uint64) (*LastCourseAndTaskInfo, error) 
 
 	return &result, nil
 }
+func CountCompletedCourses(userID uint64) (int, error) {
+	row := DB.QueryRow(`
+		SELECT COUNT(*)
+		FROM user_courses
+		WHERE user_id = ? AND completed_at IS NOT NULL
+	`, userID)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+func CountCompletedTasks(userID uint64) (int, error) {
+	row := DB.QueryRow(`
+		SELECT COUNT(*)
+		FROM submissions
+		WHERE user_id = ?
+	`, userID)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

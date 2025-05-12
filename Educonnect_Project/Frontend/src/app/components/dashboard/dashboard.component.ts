@@ -106,11 +106,14 @@ export class DashboardComponent implements OnInit {
     totalModules: 19
   };
 
-  currentStreak = 7;
-  totalCourses = 12;
-  completedCourses = 5;
-  totalExercises = 87;
-  completedExercises = 53;
+  statistics = {
+    completedCourses: 0,
+    totalCourses: 3,
+    completedExercises: 0,
+    totalExercises: 30,
+    currentStreak: 'Coming Soon'
+  };
+
 
   myCourses: any[] = []; // 🆕 aus API geladen
 
@@ -121,6 +124,7 @@ export class DashboardComponent implements OnInit {
     this.loadUser();
     this.loadLastVisitedCourseAndTask();
     this.loadDashboardOverview();
+    this.loadUserStatistics();
   }
 
   onSidebarExpand(value: boolean): void {
@@ -183,6 +187,22 @@ export class DashboardComponent implements OnInit {
       console.error('⚠️ Kein Kurs zum Fortsetzen verfügbar');
     }
   }
+  loadUserStatistics(): void {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+
+    this.http.get<any>('http://localhost:8080/progress/overview', { headers }).subscribe({
+      next: (data) => {
+        console.log('📊 Benutzer-Statistiken geladen:', data);
+        this.statistics.completedCourses = data.completed_courses;
+        this.statistics.completedExercises = data.completed_tasks;
+      },
+      error: (err) => {
+        console.error('❌ Fehler beim Laden der Statistiken:', err);
+      }
+    });
+  }
+
 
   formatDateToZurich(utcDateTime: string): string {
     if (!utcDateTime) return 'Keine Zeit verfügbar';

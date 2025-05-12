@@ -49,6 +49,7 @@ func main() {
 	r.HandleFunc("/groups/{id}/share-submission", routes.ShareSubmissionHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/last-course", routes.GetLastVisitedCourseHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/dashboard-overview", routes.GetDashboardOverviewHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/progress/overview", routes.GetUserProgressOverview)
 
 	r.HandleFunc("/groups/{groupID}/messages", routes.GetGroupMessagesHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/ws/groups/{groupID}/chat", routes.HandleGroupChatWS)

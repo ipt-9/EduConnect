@@ -389,3 +389,56 @@ func GetDashboardOverviewHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(info)
 }
+func GetUserProgressOverview(w http.ResponseWriter, r *http.Request) {
+	EnableCORS(w)
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		http.Error(w, "Authorization Header fehlt oder ist ungültig", http.StatusUnauthorized)
+		return
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "Ungültiges oder abgelaufenes Token", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := DB.GetUserByEmail(claims.Email)
+	if err != nil {
+		http.Error(w, "Benutzer nicht gefunden", http.StatusInternalServerError)
+		return
+	}
+
+	// Werte berechnen
+	courseCount, err := DB.CountCompletedCourses(user.ID)
+	if err != nil {
+		http.Error(w, "Fehler beim Zählen der abgeschlossenen Kurse", http.StatusInternalServerError)
+		return
+	}
+
+	taskCount, err := DB.CountCompletedTasks(user.ID)
+	if err != nil {
+		http.Error(w, "Fehler beim Zählen der erledigten Aufgaben", http.StatusInternalServerError)
+		return
+	}
+
+	// Rückgabe als JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"completed_courses": courseCount,
+		"completed_tasks":   taskCount,
+	})
+}

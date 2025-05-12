@@ -95,32 +95,44 @@
         <section class="statistics">
           <h3>Deine Statistiken</h3>
           <div class="stats-grid">
+
+            <!-- Abgeschlossene Kurse -->
             <div class="stat-card">
               <div class="stat-icon"><i class="fas fa-book"></i></div>
               <div class="stat-content">
                 <h4>Kurse</h4>
-                <p class="stat-number">{{ completedCourses }}/{{ totalCourses }}</p>
+                <p class="stat-number">
+                  {{ statistics.completedCourses }}/{{ statistics.totalCourses }}
+                </p>
                 <p class="stat-label">abgeschlossen</p>
               </div>
             </div>
+
+            <!-- Abgeschlossene Übungen -->
             <div class="stat-card">
               <div class="stat-icon"><i class="fas fa-code"></i></div>
               <div class="stat-content">
                 <h4>Übungen</h4>
-                <p class="stat-number">{{ completedExercises }}/{{ totalExercises }}</p>
+                <p class="stat-number">
+                  {{ statistics.completedExercises }}/{{ statistics.totalExercises }}
+                </p>
                 <p class="stat-label">absolviert</p>
               </div>
             </div>
+
+            <!-- Streak -->
             <div class="stat-card">
               <div class="stat-icon"><i class="fas fa-fire"></i></div>
               <div class="stat-content">
                 <h4>Streak</h4>
-                <p class="stat-number">{{ currentStreak }}</p>
+                <p class="stat-number">{{ statistics.currentStreak }}</p>
                 <p class="stat-label">Tage in Folge</p>
               </div>
             </div>
+
           </div>
         </section>
+
       </div>
     </main>
   </div>
