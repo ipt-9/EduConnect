@@ -283,3 +283,21 @@ $tooltip-bg: #2e2f39;
     transform: translateY(-50%) translateX(4px);
   }
 }
+.coming-soon-popup {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #333;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: fadeInOut 3s forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10%, 90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}

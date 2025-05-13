@@ -39,7 +39,6 @@ var groupClients = make(map[uint64]map[*websocket.Conn]bool)
 var groupClientsMutex sync.Mutex
 
 func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
 
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 4 {
@@ -163,7 +162,6 @@ func HandleGroupChatWS(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
 
 	// 1️⃣ OPTIONS Preflight zuerst abfangen
 	if r.Method == http.MethodOptions {
@@ -174,7 +172,7 @@ func GetGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	// 2️⃣ Authorization prüfen mit CORS
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-		EnableCORS(w) // 💥 Wichtig: Header auch bei Fehler
+
 		http.Error(w, "Token fehlt oder ungültig", http.StatusUnauthorized)
 		return
 	}
@@ -185,7 +183,7 @@ func GetGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		return jwtKey, nil
 	})
 	if err != nil || !token.Valid {
-		EnableCORS(w)
+
 		http.Error(w, "Token ungültig", http.StatusUnauthorized)
 		return
 	}
@@ -194,7 +192,7 @@ func GetGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	groupID, err := strconv.ParseUint(parts[2], 10, 64)
 	if err != nil {
-		EnableCORS(w)
+
 		http.Error(w, "Ungültige Gruppen-ID", http.StatusBadRequest)
 		return
 	}
@@ -203,7 +201,7 @@ func GetGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	messages, err := DB.GetFullGroupMessages(claims.UserID, groupID, 1000000)
 
 	if err != nil {
-		EnableCORS(w)
+
 		http.Error(w, "Fehler beim Laden: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -214,7 +212,7 @@ func GetGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	log.Println("📥 Neue Anfrage auf /groups/{id}/share-submission")
 
 	if r.Method == http.MethodOptions {
@@ -230,7 +228,7 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	// 🔐 JWT prüfen
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-		EnableCORS(w)
+
 		http.Error(w, "Authorization Header fehlt", http.StatusUnauthorized)
 		log.Println("⛔ Kein oder ungültiger Authorization Header")
 		return
@@ -241,7 +239,7 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		return jwtKey, nil
 	})
 	if err != nil || !token.Valid {
-		EnableCORS(w)
+
 		http.Error(w, "Ungültiges oder abgelaufenes Token", http.StatusUnauthorized)
 		log.Println("⛔ Token ungültig:", err)
 		return
@@ -253,7 +251,7 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	groupIDStr := vars["id"]
 	groupID, err := strconv.Atoi(groupIDStr)
 	if err != nil {
-		EnableCORS(w)
+
 		http.Error(w, "Ungültige Gruppen-ID", http.StatusBadRequest)
 		log.Println("⛔ Fehler beim Parsen der Gruppen-ID:", err)
 		return
@@ -264,7 +262,7 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 		TaskID int `json:"task_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		EnableCORS(w)
+
 		http.Error(w, "Ungültiges JSON", http.StatusBadRequest)
 		log.Println("⛔ Fehler beim Parsen des JSON:", err)
 		return
@@ -273,7 +271,7 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	// ✅ Submission, Task-Titel, Username laden
 	sub, err := DB.GetSubmissionByTaskAndUser(uint64(req.TaskID), claims.UserID)
 	if err != nil {
-		EnableCORS(w)
+
 		http.Error(w, "Keine gültige Lösung gefunden", http.StatusNotFound)
 		log.Println("⛔ Keine gültige Submission:", err)
 		return
@@ -293,7 +291,7 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	err = DB.SaveGroupMessage(uint64(groupID), claims.UserID, msg, "submission", &taskID)
 
 	if err != nil {
-		EnableCORS(w)
+
 		http.Error(w, "Nachricht konnte nicht gespeichert werden", http.StatusInternalServerError)
 		log.Println("⛔ Fehler beim Speichern der Nachricht:", err)
 		return
@@ -340,7 +338,6 @@ func ShareSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMySubmissionsHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
 
 	// CORS Preflight korrekt abfangen
 	if r.Method == http.MethodOptions {
@@ -350,7 +347,7 @@ func GetMySubmissionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-		EnableCORS(w) // ❗️auch hier
+
 		http.Error(w, "Token fehlt oder ungültig", http.StatusUnauthorized)
 		return
 	}
@@ -361,14 +358,14 @@ func GetMySubmissionsHandler(w http.ResponseWriter, r *http.Request) {
 		return jwtKey, nil
 	})
 	if err != nil || !token.Valid {
-		EnableCORS(w) // ❗️auch hier
+
 		http.Error(w, "Token ungültig", http.StatusUnauthorized)
 		return
 	}
 
 	submissions, err := DB.GetSuccessfulSubmissionsByUser(claims.UserID)
 	if err != nil {
-		EnableCORS(w) // ❗️auch hier bei Fehler
+
 		http.Error(w, "Fehler beim Abrufen der Daten: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

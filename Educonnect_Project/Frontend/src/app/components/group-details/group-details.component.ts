@@ -59,13 +59,13 @@ export class GroupDetailsComponent implements OnInit {
   }
 
   loadGroupDetails() {
-    this.http.get(`http://localhost:8080/groups/${this.groupId}`, {
+    this.http.get(`https://api.educonnect-bmsd22a.bbzwinf.ch/groups/${this.groupId}`, {
       headers: this.getAuthHeaders()
     }).subscribe(data => this.group = data);
   }
 
   loadMembers() {
-    this.http.get<any[]>(`http://localhost:8080/groups/${this.groupId}/members`, {
+    this.http.get<any[]>(`https://api.educonnect-bmsd22a.bbzwinf.ch/groups/${this.groupId}/members`, {
       headers: this.getAuthHeaders()
     }).subscribe(data => {
       this.members = data;
@@ -75,7 +75,7 @@ export class GroupDetailsComponent implements OnInit {
   }
 
   loadNotifications() {
-    this.http.get<any[]>(`http://localhost:8080/groups/${this.groupId}/notifications`, {
+    this.http.get<any[]>(`https://api.educonnect-bmsd22a.bbzwinf.ch/groups/${this.groupId}/notifications`, {
       headers: this.getAuthHeaders()
     }).subscribe({
       next: data => this.notifications = data,
@@ -92,7 +92,7 @@ export class GroupDetailsComponent implements OnInit {
     const confirmLeave = confirm("Möchtest du die Gruppe wirklich verlassen?");
     if (!confirmLeave) return;
 
-    this.http.delete(`http://localhost:8080/groups/${this.groupId}/members/${this.userId}`, {
+    this.http.delete(`https://api.educonnect-bmsd22a.bbzwinf.ch/groups/${this.groupId}/members/${this.userId}`, {
       headers: this.getAuthHeaders()
     }).subscribe({
       next: () => {

@@ -24,7 +24,7 @@ type createGroupRequest struct {
 }
 
 func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -78,7 +78,7 @@ func CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(group)
 }
 func JoinGroupByCodeHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -139,7 +139,7 @@ func JoinGroupByCodeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetGroupMembersHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -184,7 +184,7 @@ func GetGroupMembersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(members)
 }
 func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -278,7 +278,7 @@ func RemoveGroupMemberHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateMemberRoleHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -352,7 +352,6 @@ func UpdateMemberRoleHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUserGroupsHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
@@ -391,7 +390,6 @@ func GetUserGroupsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(groups)
 }
 func GetGroupByIDHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)

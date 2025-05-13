@@ -15,7 +15,7 @@ import (
 )
 
 func GetMyCourses(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -57,7 +57,7 @@ func GetMyCourses(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(courses)
 }
 func GetTasksByCourse(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -112,7 +112,6 @@ func GetTasksByCourse(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tasks)
 }
 func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
@@ -264,7 +263,6 @@ func SubmitTaskSolution(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetSubmittedCode(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
@@ -318,7 +316,7 @@ func GetSubmittedCode(w http.ResponseWriter, r *http.Request) {
 	})
 }
 func GetLastVisitedCourseHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -354,7 +352,7 @@ func GetLastVisitedCourseHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(info)
 }
 func GetDashboardOverviewHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -390,7 +388,7 @@ func GetDashboardOverviewHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(info)
 }
 func GetUserProgressOverview(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -441,4 +439,108 @@ func GetUserProgressOverview(w http.ResponseWriter, r *http.Request) {
 		"completed_courses": courseCount,
 		"completed_tasks":   taskCount,
 	})
+}
+func ActivateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		http.Error(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
+		return
+	}
+
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+	// JWT prüfen
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+		return
+	}
+
+	userIDFloat, ok := claims["user_id"].(float64)
+	if !ok {
+		http.Error(w, "Invalid user_id claim", http.StatusUnauthorized)
+		return
+	}
+
+	userID := uint64(userIDFloat)
+
+	// Subscription aktivieren
+	if err := DB.ActivateUserSubscription(userID); err != nil {
+		http.Error(w, fmt.Sprintf("Fehler beim Aktivieren der Subscription: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("✅ Subscription erfolgreich aktiviert"))
+}
+func CheckSubscriptionStatusHandler(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		http.Error(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
+		return
+	}
+
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+	// JWT prüfen
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+		return
+	}
+
+	userIDFloat, ok := claims["user_id"].(float64)
+	if !ok {
+		http.Error(w, "Invalid user_id claim", http.StatusUnauthorized)
+		return
+	}
+
+	userID := uint64(userIDFloat)
+
+	// Abo-Status aus der Datenbank holen
+	hasSubscription, err := DB.CheckUserSubscription(userID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Fehler beim Überprüfen des Abo-Status: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Ergebnis zurückgeben
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"has_subscription": hasSubscription})
 }

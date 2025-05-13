@@ -37,7 +37,7 @@ export class RegisterComponent {
       .set('email', this.email)
       .set('password', this.password);
 
-    this.http.post('http://localhost:8080/register', body.toString(), {
+    this.http.post('https://api.educonnect-bmsd22a.bbzwinf.ch/register', body.toString(), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       responseType: 'text'
     }).subscribe({

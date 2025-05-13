@@ -498,3 +498,31 @@ func CountCompletedTasks(userID uint64) (int, error) {
 
 	return count, nil
 }
+func ActivateUserSubscription(userID uint64) error {
+	log.Printf("📥 Versuche, Subscription für user_id=%d zu aktivieren...", userID)
+
+	result, err := DB.Exec(`UPDATE users SET has_subscription = TRUE WHERE id = ?`, userID)
+	if err != nil {
+		log.Printf("❌ Fehler beim Update: %v", err)
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("⚠️ Fehler beim Abrufen der RowsAffected: %v", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		log.Printf("⚠️ Keine Zeile aktualisiert für user_id=%d", userID)
+		return fmt.Errorf("kein Benutzer mit user_id=%d gefunden", userID)
+	}
+
+	log.Printf("✅ Subscription für user_id=%d erfolgreich aktiviert", userID)
+	return nil
+}
+func CheckUserSubscription(userID uint64) (bool, error) {
+	var hasSubscription bool
+	err := DB.QueryRow("SELECT has_subscription FROM users WHERE id = ?", userID).Scan(&hasSubscription)
+	return hasSubscription, err
+}

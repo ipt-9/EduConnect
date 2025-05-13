@@ -23,7 +23,7 @@ export class TasksListComponent implements OnInit {
     const token = localStorage.getItem('token');
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<any[]>(`http://localhost:8080/courses/${courseId}/tasks`, { headers }).subscribe({
+    this.http.get<any[]>(`https://api.educonnect-bmsd22a.bbzwinf.ch/courses/${courseId}/tasks`, { headers }).subscribe({
       next: (data) => {
         this.tasks = data;
         console.log('📘 Aufgaben geladen:', data);

@@ -37,7 +37,7 @@ export class GroupManagerComponent implements OnInit {
 
   loadGroups() {
     this.groups = []; // vorher leeren
-    this.http.get<any[]>('http://localhost:8080/groups', { headers: this.getAuthHeaders() })
+    this.http.get<any[]>('https://api.educonnect-bmsd22a.bbzwinf.ch/groups', { headers: this.getAuthHeaders() })
       .subscribe({
         next: (data) => this.groups = data,
         error: (err) => {
@@ -58,7 +58,7 @@ export class GroupManagerComponent implements OnInit {
       description: this.groupDescription
     };
 
-    this.http.post('http://localhost:8080/groups', payload, { headers: this.getAuthHeaders() })
+    this.http.post('https://api.educonnect-bmsd22a.bbzwinf.ch/groups', payload, { headers: this.getAuthHeaders() })
       .subscribe({
         next: () => {
           alert("✅ Gruppe erstellt!");
@@ -79,7 +79,7 @@ export class GroupManagerComponent implements OnInit {
       return;
     }
 
-    this.http.post(`http://localhost:8080/groups/join?code=${this.joinCode}`, {}, { headers: this.getAuthHeaders() })
+    this.http.post(`https://api.educonnect-bmsd22a.bbzwinf.ch/groups/join?code=${this.joinCode}`, {}, { headers: this.getAuthHeaders() })
       .subscribe({
         next: () => {
           alert("🎉 Erfolgreich beigetreten!");
@@ -94,7 +94,7 @@ export class GroupManagerComponent implements OnInit {
   }
 
   loadMembers(groupId: number) {
-    this.http.get(`http://localhost:8080/groups/${groupId}/members`, { headers: this.getAuthHeaders() })
+    this.http.get(`https://api.educonnect-bmsd22a.bbzwinf.ch/groups/${groupId}/members`, { headers: this.getAuthHeaders() })
       .subscribe({
         next: (members) => {
           console.log("👥 Mitglieder:", members);
@@ -108,7 +108,7 @@ export class GroupManagerComponent implements OnInit {
   }
 
   updateRole(groupId: number, userId: number, role: string) {
-    this.http.put(`http://localhost:8080/groups/${groupId}/members/${userId}/role`, { role }, { headers: this.getAuthHeaders() })
+    this.http.put(`https://api.educonnect-bmsd22a.bbzwinf.ch/groups/${groupId}/members/${userId}/role`, { role }, { headers: this.getAuthHeaders() })
       .subscribe({
         next: () => alert("✅ Rolle aktualisiert."),
         error: (err) => {

@@ -1,4 +1,7 @@
 <div class="sidebar" [class.expanded]="isExpanded">
+  <div *ngIf="showComingSoon" class="coming-soon-popup">
+    🚧 Coming Soon
+  </div>
   <!-- Top: Profile & Toggle Button -->
   <div class="top-section">
     <button class="toggle-btn" (click)="toggleSidebar()">
@@ -27,17 +30,21 @@
                 [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }"
                 (click)="navigateTo('groupmanager')">
           <mat-icon>person</mat-icon>
-          <span *ngIf="isExpanded">Users</span>
+          <span *ngIf="isExpanded">Groups</span>
           <div class="side-tooltip" *ngIf="!isExpanded">Users</div>
         </button>
 
-        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+        <!-- Calendar -->
+        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }"
+                (click)="showComingSoonPopup()">
           <mat-icon>calendar_today</mat-icon>
           <span *ngIf="isExpanded">Calendar</span>
           <div class="side-tooltip" *ngIf="!isExpanded">Calendar</div>
         </button>
 
-        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+        <!-- EduBot AI -->
+        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }"
+                (click)="showComingSoonPopup()">
           <mat-icon>description</mat-icon>
           <span *ngIf="isExpanded">EduBot AI</span>
           <div class="side-tooltip" *ngIf="!isExpanded">EduBot AI</div>
@@ -51,7 +58,8 @@
     <div class="nav-section">
       <div class="section-title settings-title">SETTINGS</div>
       <nav class="nav">
-        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }">
+        <button class="nav-btn has-tooltip" [ngClass]="{ 'centered': !isExpanded, 'left': isExpanded }"
+                (click)="showComingSoonPopup()">
           <mat-icon>settings</mat-icon>
           <span *ngIf="isExpanded">Settings</span>
           <div class="side-tooltip" *ngIf="!isExpanded">Settings</div>

@@ -68,7 +68,7 @@
         'Content-Type': 'application/json'
       });
 
-      fetch(`http://localhost:8080/courses/${courseId}/tasks`, { headers })
+      fetch(`https://api.educonnect-bmsd22a.bbzwinf.ch/courses/${courseId}/tasks`, { headers })
         .then(res => res.json())
         .then((allTasks) => {
           const updatedTask = allTasks.find((t: any) => t.id === storedTask.id);
@@ -89,7 +89,7 @@
 
           this.isLoadingCode = true;
 
-          fetch(`http://localhost:8080/tasks/${this.task.id}/submitted-code`, { headers })
+          fetch(`https://api.educonnect-bmsd22a.bbzwinf.ch/tasks/${this.task.id}/submitted-code`, { headers })
             .then(async res => {
               if (res.ok) {
                 const data = await res.json();
@@ -109,7 +109,7 @@
             });
 
           // 💡 Tipps laden
-          fetch(`http://localhost:8080/tasks/${this.task.id}/tips`, { headers })
+          fetch(`https://api.educonnect-bmsd22a.bbzwinf.ch/tasks/${this.task.id}/tips`, { headers })
             .then(res => res.json())
             .then((tips) => {
               if (Array.isArray(tips) && tips.length > 0) {
@@ -328,7 +328,7 @@
         used_hint: false
       };
 
-      fetch('http://localhost:8080/submit', {
+      fetch('https://api.educonnect-bmsd22a.bbzwinf.ch/submit', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -355,7 +355,7 @@
 
           // ✅ Code neu laden, wenn Aufgabe erfolgreich war
           if (data.success) {
-            fetch(`http://localhost:8080/tasks/${this.task.id}/submitted-code`, {
+            fetch(`https://api.educonnect-bmsd22a.bbzwinf.ch/tasks/${this.task.id}/submitted-code`, {
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -375,7 +375,7 @@
 
           // 💡 Tipps automatisch neu laden nach Abgabe (bei Fehler)
           if (!data.success) {
-            fetch(`http://localhost:8080/tasks/${this.task.id}/tips`, {
+            fetch(`https://api.educonnect-bmsd22a.bbzwinf.ch/tasks/${this.task.id}/tips`, {
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'

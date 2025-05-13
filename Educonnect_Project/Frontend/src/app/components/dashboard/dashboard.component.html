@@ -75,7 +75,7 @@
         <section class="recommended-courses">
           <h3>Meine Kurse</h3>
           <div class="courses-grid">
-            <div class="course-card" *ngFor="let course of myCourses">
+            <div class="course-card" *ngFor="let course of myCourses; let i = index" [class.locked]="!hasSubscription && i > 0">
               <div class="course-details">
                 <h4>{{ course.topic }}</h4>
                 <div class="course-meta">
@@ -85,11 +85,21 @@
                 <p *ngIf="course.started && !course.completed" class="status-tag">⏳ In Bearbeitung</p>
                 <p *ngIf="!course.started" class="status-tag">🚀 Noch nicht begonnen</p>
                 <p *ngIf="course.completed" class="status-tag completed">✅ Abgeschlossen</p>
-                <button class="outline-button" (click)="openCourse(course.id)">Aufgabe anzeigen</button>
+                <button class="outline-button"
+                        [disabled]="!hasSubscription && i > 0"
+                        (click)="openCourse(course.id)">
+                  Aufgabe anzeigen
+                </button>
+              </div>
+
+              <!-- Klickbare Overlay-Schicht -->
+              <div class="lock-overlay" *ngIf="!hasSubscription && i > 0" (click)="navigateToPayment()">
+                <p>Nur für Premium-Nutzer</p>
               </div>
             </div>
           </div>
         </section>
+
 
         <!-- Statistiken -->
         <section class="statistics">

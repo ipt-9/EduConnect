@@ -5,25 +5,23 @@ import (
 	"github.com/ipt-9/EduConnect/DB"
 	"github.com/ipt-9/EduConnect/Routes"
 	"github.com/joho/godotenv"
-	"github.com/rs/cors"
 	"log"
 	"net/http"
 )
 
 func main() {
-	if err := DB.Connect(); err != nil {
-		log.Fatalf("Fehler bei der Verbindung zur Datenbank: %v", err)
-	}
-	defer DB.Close()
-
 	err := godotenv.Load("configuration.env")
 	if err != nil {
 		log.Fatal("❌ Fehler beim Laden der .env Datei")
 	}
 
+	if err := DB.Connect(); err != nil {
+		log.Fatalf("Fehler bei der Verbindung zur Datenbank: %v", err)
+	}
+	defer DB.Close()
+
 	r := mux.NewRouter()
 	routes.InitJWT()
-	handler := cors.AllowAll().Handler(r)
 	r.HandleFunc("/register", routes.Register).Methods("POST", "OPTIONS")
 	r.HandleFunc("/login", routes.Login).Methods("POST", "OPTIONS")
 	r.HandleFunc("/protected", routes.Protected).Methods("GET", "OPTIONS")
@@ -50,6 +48,8 @@ func main() {
 	r.HandleFunc("/last-course", routes.GetLastVisitedCourseHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/dashboard-overview", routes.GetDashboardOverviewHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/progress/overview", routes.GetUserProgressOverview)
+	r.HandleFunc("/activate-subscription", routes.ActivateSubscriptionHandler)
+	r.HandleFunc("/subscription-status", routes.CheckSubscriptionStatusHandler)
 
 	r.HandleFunc("/groups/{groupID}/messages", routes.GetGroupMessagesHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/ws/groups/{groupID}/chat", routes.HandleGroupChatWS)
@@ -58,6 +58,16 @@ func main() {
 	r.HandleFunc("/create-checkout-session", routes.CreateCheckoutSession).Methods("POST", "OPTIONS")
 	r.HandleFunc("/session-status", routes.RetrieveCheckoutSession).Methods("GET", "OPTIONS")
 
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./dist/frontend/browser")))
+
+	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		http.ServeFile(w, r, "./dist/frontend/browser/index.html")
+
+	})
+
 	log.Println("🚀 Server läuft auf http://localhost:8080")
-	http.ListenAndServe(":8080", handler)
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatalf("❌ Server konnte nicht gestartet werden: %v", err)
+	}
 }

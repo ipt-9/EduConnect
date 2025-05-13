@@ -35,7 +35,7 @@ export class LoginComponent {
     this.resetUI();
     this.loading = true;
 
-    this.http.post('http://localhost:8080/login', {
+      this.http.post('https://api.educonnect-bmsd22a.bbzwinf.ch/login', {
       email: this.email,
       password: this.password
     }, {
@@ -62,7 +62,7 @@ export class LoginComponent {
       return;
     }
 
-    this.http.post<{ token: string }>('http://localhost:8080/verify-2fa', {
+    this.http.post<{ token: string }>('https://api.educonnect-bmsd22a.bbzwinf.ch/verify-2fa', {
       email: this.email,
       code: this.code
     }).subscribe({

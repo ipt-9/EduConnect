@@ -30,14 +30,8 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func EnableCORS(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-}
-
 func Register(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -101,7 +95,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -138,7 +132,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Protected(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -166,7 +160,7 @@ func Protected(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -200,7 +194,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func Verify2FA(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -240,7 +234,7 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expirationTime := time.Now().Add(45 * time.Minute)
+	expirationTime := time.Now().Add(24 * time.Hour)
 
 	claims := jwt.MapClaims{
 		"user_id":  userID,
@@ -263,14 +257,12 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	DB.Delete2FACode(userID)
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
 }
 
 func Me(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return

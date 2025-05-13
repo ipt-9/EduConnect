@@ -35,7 +35,7 @@ export class LogoutButtonComponent {
   constructor(private http: HttpClient, private router: Router) {}
 
   logout() {
-    this.http.post('http://localhost:8080/logout', {}).subscribe({
+    this.http.post('https://api.educonnect-bmsd22a.bbzwinf.ch/logout', {}).subscribe({
       next: () => {
         localStorage.clear();
         this.router.navigate(['/login']);

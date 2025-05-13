@@ -12,7 +12,6 @@ import (
 )
 
 func GetUserTipsForTaskHandler(w http.ResponseWriter, r *http.Request) {
-	EnableCORS(w)
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)

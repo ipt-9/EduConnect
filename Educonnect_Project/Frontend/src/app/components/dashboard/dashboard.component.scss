@@ -633,5 +633,30 @@ $transition: all 0.3s ease;
     margin-left: 240px;
   }
 }
+.course-card.locked {
+  position: relative;
+  filter: blur(2px);
+  opacity: 0.6;
+
+  .lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(4px);
+    background-color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: #ff6b6b;
+    z-index: 1;
+    cursor: pointer;
+    pointer-events: auto; 
+  }
+}
+
+
 
 

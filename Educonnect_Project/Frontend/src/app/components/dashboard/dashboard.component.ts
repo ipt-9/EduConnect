@@ -42,11 +42,29 @@ export class DashboardComponent implements OnInit {
     nextPendingTaskTitle: '',
     nextPendingTaskId: 0
   };
+  hasSubscription: boolean = false;
+
+  checkSubscriptionStatus(): void {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+
+    this.http.get<{ has_subscription: boolean }>('https://api.educonnect-bmsd22a.bbzwinf.ch/subscription-status', { headers }).subscribe({
+      next: (data) => {
+        console.log('🔒 Abo-Status geladen:', data.has_subscription);
+        this.hasSubscription = data.has_subscription;
+      },
+      error: (err) => {
+        console.error('❌ Fehler beim Prüfen des Abo-Status:', err);
+      }
+    });
+  }
+
+
   loadDashboardOverview(): void {
     const token = localStorage.getItem('token');
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<any>('http://localhost:8080/dashboard-overview', { headers }).subscribe({
+    this.http.get<any>('https://api.educonnect-bmsd22a.bbzwinf.ch/dashboard-overview', { headers }).subscribe({
       next: (data) => {
         console.log('📊 Dashboard Overview:', data);
         this.dashboardOverview.lastMessageText = data.last_message_text || 'Keine neue Nachricht';
@@ -65,7 +83,7 @@ export class DashboardComponent implements OnInit {
     const token = localStorage.getItem('token');
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<any>('http://localhost:8080/last-course', { headers }).subscribe({
+    this.http.get<any>('https://api.educonnect-bmsd22a.bbzwinf.ch/last-course', { headers }).subscribe({
       next: (data) => {
         console.log('🕹️ Letzter besuchter Kurs und Aufgabe:', data);
         this.recentCourse.title = data.course_title;
@@ -120,6 +138,7 @@ export class DashboardComponent implements OnInit {
   constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
+    this.checkSubscriptionStatus();
     this.loadMyCourses();
     this.loadUser();
     this.loadLastVisitedCourseAndTask();
@@ -130,12 +149,14 @@ export class DashboardComponent implements OnInit {
   onSidebarExpand(value: boolean): void {
     this.sidebarExpanded = value;
   }
-
+  navigateToPayment(): void {
+    this.router.navigate(['/payment']);
+  }
   loadMyCourses(): void {
     const token = localStorage.getItem('token');
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<any[]>('http://localhost:8080/my-courses', { headers }).subscribe({
+    this.http.get<any[]>('https://api.educonnect-bmsd22a.bbzwinf.ch/my-courses', { headers }).subscribe({
       next: (data) => {
         this.myCourses = data;
         console.log('📚 Meine Kurse geladen:', data);
@@ -169,7 +190,7 @@ export class DashboardComponent implements OnInit {
     const token = localStorage.getItem('token');
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<{ username: string }>('http://localhost:8080/me', {headers}).subscribe({
+    this.http.get<{ username: string }>('https://api.educonnect-bmsd22a.bbzwinf.ch/me', {headers}).subscribe({
       next: (data) => {
         this.user.name = data.username;
         console.log('🙋 Benutzer geladen:', data.username);
@@ -191,7 +212,7 @@ export class DashboardComponent implements OnInit {
     const token = localStorage.getItem('token');
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<any>('http://localhost:8080/progress/overview', { headers }).subscribe({
+    this.http.get<any>('https://api.educonnect-bmsd22a.bbzwinf.ch/progress/overview', { headers }).subscribe({
       next: (data) => {
         console.log('📊 Benutzer-Statistiken geladen:', data);
         this.statistics.completedCourses = data.completed_courses;

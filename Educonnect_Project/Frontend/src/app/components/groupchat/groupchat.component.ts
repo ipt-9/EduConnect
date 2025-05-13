@@ -116,7 +116,7 @@ export class GroupChatComponent implements OnInit, OnDestroy {
 
   loadHistory(): void {
     this.http
-      .get<GroupChatMessage[]>(`http://localhost:8080/groups/${this.groupId}/messages`, {
+      .get<GroupChatMessage[]>(`https://api.educonnect-bmsd22a.bbzwinf.ch/groups/${this.groupId}/messages`, {
         headers: this.getAuthHeaders()
       })
       .subscribe({
@@ -140,7 +140,7 @@ export class GroupChatComponent implements OnInit, OnDestroy {
 
   connectWebSocket(): void {
     this.socket = new WebSocketSubject(
-      `ws://localhost:8080/ws/groups/${this.groupId}/chat?token=${this.token}`
+      `https://api.educonnect-bmsd22a.bbzwinf.ch/ws/groups/${this.groupId}/chat?token=${this.token}`
     );
 
     this.socket.subscribe({
@@ -172,7 +172,7 @@ export class GroupChatComponent implements OnInit, OnDestroy {
 
     this.http
       .get<{ task_id: number; task_title: string }[]>(
-        `http://localhost:8080/users/me/submissions`,
+        `https://api.educonnect-bmsd22a.bbzwinf.ch/users/me/submissions`,
         { headers: this.getAuthHeaders() }
       )
       .subscribe({
@@ -184,7 +184,7 @@ export class GroupChatComponent implements OnInit, OnDestroy {
   shareSubmission(taskId: number): void {
     this.http
       .post(
-        `http://localhost:8080/groups/${this.groupId}/share-submission`,
+        `https://api.educonnect-bmsd22a.bbzwinf.ch${this.groupId}/share-submission`,
         { task_id: taskId },
         { headers: this.getAuthHeaders() }
       )

@@ -28,13 +28,19 @@ export class SidebarComponent {
   @Output() expandedChange = new EventEmitter<boolean>();
 
   constructor(private http: HttpClient, private router: Router) {} // ✅ INSIDE the class
+  showComingSoon = false;
+
+  showComingSoonPopup(): void {
+    this.showComingSoon = true;
+    setTimeout(() => this.showComingSoon = false, 3000);
+  }
 
   toggleSidebar(): void {
     this.isExpanded = !this.isExpanded;
     this.expandedChange.emit(this.isExpanded);
   }
   logout() {
-    this.http.post('http://localhost:8080/logout', {}).subscribe({
+    this.http.post('https://api.educonnect-bmsd22a.bbzwinf.ch/logout', {}).subscribe({
       next: () => {
         localStorage.clear();
         this.router.navigate(['/login']);
